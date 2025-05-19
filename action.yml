@@ -1,5 +1,4 @@
-name: "Claude Action"
-
+name: "Claude Code Action Official"
 description: "General-purpose Claude agent for GitHub PRs and issues. Can answer questions and implement code changes."
 branding:
   icon: "at-sign"
