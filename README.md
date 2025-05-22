@@ -69,7 +69,8 @@ jobs:
 | `direct_prompt`       | Direct prompt for Claude to execute automatically without needing a trigger (for automated workflows)                | No       | -                            |
 | `timeout_minutes`     | Timeout in minutes for execution                                                                                     | No       | `30`                         |
 | `github_token`        | GitHub token for Claude to operate with. **Only include this if you're connecting a custom GitHub app of your own!** | No       | -                            |
-| `anthropic_model`     | Model to use (provider-specific format required for Bedrock/Vertex)                                                  | No       | `claude-3-7-sonnet-20250219` |
+| `model`               | Model to use (provider-specific format required for Bedrock/Vertex)                                                  | No       | -                            |
+| `anthropic_model`     | **DEPRECATED**: Use `model` instead. Kept for backward compatibility.                                                | No       | `claude-3-7-sonnet-20250219` |
 | `use_bedrock`         | Use Amazon Bedrock with OIDC authentication instead of direct Anthropic API                                          | No       | `false`                      |
 | `use_vertex`          | Use Google Vertex AI with OIDC authentication instead of direct Anthropic API                                        | No       | `false`                      |
 | `allowed_tools`       | Additional tools for Claude to use (the base GitHub tools will always be included)                                   | No       | ""                           |
@@ -255,7 +256,7 @@ Use a specific Claude model:
 ```yaml
 - uses: anthropics/claude-code-action@beta
   with:
-    anthropic_model: "claude-3-7-sonnet-20250219"
+    # model: "claude-3-5-sonnet-20241022"  # Optional: specify a different model
     # ... other inputs
 ```
 
@@ -283,21 +284,20 @@ Use provider-specific model names based on your chosen provider:
 # For direct Anthropic API (default)
 - uses: anthropics/claude-code-action@beta
   with:
-    anthropic_model: "claude-3-7-sonnet-20250219"
     anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
     # ... other inputs
 
 # For Amazon Bedrock with OIDC
 - uses: anthropics/claude-code-action@beta
   with:
-    anthropic_model: "anthropic.claude-3-7-sonnet-20250219-beta:0" # Cross-region inference
+    model: "anthropic.claude-3-7-sonnet-20250219-beta:0" # Cross-region inference
     use_bedrock: "true"
     # ... other inputs
 
 # For Google Vertex AI with OIDC
 - uses: anthropics/claude-code-action@beta
   with:
-    anthropic_model: "claude-3-7-sonnet@20250219"
+    model: "claude-3-7-sonnet@20250219"
     use_vertex: "true"
     # ... other inputs
 ```
@@ -323,7 +323,7 @@ Both AWS Bedrock and GCP Vertex AI require OIDC authentication.
 
 - uses: anthropics/claude-code-action@beta
   with:
-    anthropic_model: "anthropic.claude-3-7-sonnet-20250219-beta:0"
+    model: "anthropic.claude-3-7-sonnet-20250219-beta:0"
     use_bedrock: "true"
     # ... other inputs
 

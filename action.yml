@@ -14,8 +14,11 @@ inputs:
     required: false
 
   # Claude Code configuration
-  anthropic_model:
+  model:
     description: "Model to use (provider-specific format required for Bedrock/Vertex)"
+    required: false
+  anthropic_model:
+    description: "DEPRECATED: Use 'model' instead. Model to use (provider-specific format required for Bedrock/Vertex)"
     required: false
     default: "claude-3-7-sonnet-20250219"
   allowed_tools:
@@ -98,14 +101,14 @@ runs:
         allowed_tools: ${{ env.ALLOWED_TOOLS }}
         disallowed_tools: ${{ env.DISALLOWED_TOOLS }}
         timeout_minutes: ${{ inputs.timeout_minutes }}
-        anthropic_model: ${{ inputs.anthropic_model }}
+        anthropic_model: ${{ inputs.model || inputs.anthropic_model }}
         mcp_config: ${{ steps.prepare.outputs.mcp_config }}
         use_bedrock: ${{ inputs.use_bedrock }}
         use_vertex: ${{ inputs.use_vertex }}
         anthropic_api_key: ${{ inputs.anthropic_api_key }}
       env:
         # Model configuration
-        ANTHROPIC_MODEL: ${{ inputs.anthropic_model }}
+        ANTHROPIC_MODEL: ${{ inputs.model || inputs.anthropic_model }}
         GITHUB_TOKEN: ${{ steps.prepare.outputs.GITHUB_TOKEN }}
 
         # AWS configuration
