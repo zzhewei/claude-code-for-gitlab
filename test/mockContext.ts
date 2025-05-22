@@ -10,7 +10,7 @@ import type {
 const defaultInputs = {
   triggerPhrase: "/claude",
   assigneeTrigger: "",
-  anthropicModel: "claude-3-5-sonnet-20241022",
+  anthropicModel: "claude-3-7-sonnet-20250219",
   allowedTools: "",
   disallowedTools: "",
   customInstructions: "",
