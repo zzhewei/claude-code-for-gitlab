@@ -348,7 +348,7 @@ Both AWS Bedrock and GCP Vertex AI require OIDC authentication.
 
 - uses: anthropics/claude-code-action@beta
   with:
-    anthropic_model: "claude-3-7-sonnet@20250219"
+    model: "claude-3-7-sonnet@20250219"
     use_vertex: "true"
     # ... other inputs
 
