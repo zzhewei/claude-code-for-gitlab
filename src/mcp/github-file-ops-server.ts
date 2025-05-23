@@ -73,9 +73,7 @@ server.tool(
         throw new Error("GITHUB_TOKEN environment variable is required");
       }
 
-      // Process file paths - keep them as-is for now
       const processedFiles = files.map((filePath) => {
-        // Remove leading slash if present to ensure relative paths
         if (filePath.startsWith("/")) {
           return filePath.slice(1);
         }
@@ -121,7 +119,6 @@ server.tool(
       // 3. Create tree entries for all files
       const treeEntries = await Promise.all(
         processedFiles.map(async (filePath) => {
-          // Construct the full path using REPO_DIR
           const fullPath = filePath.startsWith('/') 
             ? filePath 
             : join(REPO_DIR, filePath);
