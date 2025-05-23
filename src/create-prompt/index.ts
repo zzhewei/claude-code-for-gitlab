@@ -434,9 +434,27 @@ ${
   eventData.eventName === "pull_request_review_comment"
     ? `<comment_tool_info>
 IMPORTANT: For this inline PR review comment, you have been provided with ONLY the mcp__github__update_pull_request_comment tool to update this specific review comment.
+
+Tool usage example for mcp__github__update_pull_request_comment:
+{
+  "owner": "${context.repository.split("/")[0]}",
+  "repo": "${context.repository.split("/")[1]}",
+  "commentId": ${eventData.commentId || context.claudeCommentId},
+  "body": "Your comment text here"
+}
+All four parameters (owner, repo, commentId, body) are required.
 </comment_tool_info>`
     : `<comment_tool_info>
 IMPORTANT: For this event type, you have been provided with ONLY the mcp__github__update_issue_comment tool to update comments.
+
+Tool usage example for mcp__github__update_issue_comment:
+{
+  "owner": "${context.repository.split("/")[0]}",
+  "repo": "${context.repository.split("/")[1]}",
+  "commentId": ${context.claudeCommentId},
+  "body": "Your comment text here"
+}
+All four parameters (owner, repo, commentId, body) are required.
 </comment_tool_info>`
 }
 
@@ -547,6 +565,9 @@ Important Notes:
 - Use this spinner HTML when work is in progress: <img src="https://github.com/user-attachments/assets/5ac382c7-e004-429b-8e35-7feb3e8f9c6f" width="14px" height="14px" style="vertical-align: middle; margin-left: 4px;" />
 ${eventData.isPR && !eventData.claudeBranch ? `- Always push to the existing branch when triggered on a PR.` : `- IMPORTANT: You are already on the correct branch (${eventData.claudeBranch || "the created branch"}). Never create new branches when triggered on issues or closed/merged PRs.`}
 - Use mcp__github_file_ops__commit_files for making commits (works for both new and existing files, single or multiple). Use mcp__github_file_ops__delete_files for deleting files (supports deleting single or multiple files atomically), or mcp__github__delete_file for deleting a single file. Edit files locally, and the tool will read the content from the same path on disk.
+  Tool usage examples:
+  - mcp__github_file_ops__commit_files: {"files": ["path/to/file1.js", "path/to/file2.py"], "message": "feat: add new feature"}
+  - mcp__github_file_ops__delete_files: {"files": ["path/to/old.js"], "message": "chore: remove deprecated file"}
 - Display the todo list as a checklist in the GitHub comment and mark things off as you go.
 - REPOSITORY SETUP INSTRUCTIONS: The repository's CLAUDE.md file(s) contain critical repo-specific setup instructions, development guidelines, and preferences. Always read and follow these files, particularly the root CLAUDE.md, as they provide essential context for working with the codebase effectively.
 - Use h3 headers (###) for section titles in your comments, not h1 headers (#).

@@ -34,6 +34,7 @@ export async function prepareMcpConfig(
             REPO_OWNER: owner,
             REPO_NAME: repo,
             BRANCH_NAME: branch,
+            REPO_DIR: process.env.GITHUB_WORKSPACE || process.cwd(),
           },
         },
       },
