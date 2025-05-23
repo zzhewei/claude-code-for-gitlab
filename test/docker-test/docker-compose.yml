@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  mcp-test:
+    build:
+      context: ../..
+      dockerfile: test/docker-test/Dockerfile
+    environment:
+      - GITHUB_TOKEN=test-token
+      - REPO_OWNER=anthropics
+      - REPO_NAME=anthropic
+      - BRANCH_NAME=test-branch
+    volumes:
+      # Mount the source code for live testing
+      - ../../src:/home/runner/work/_actions/anthropics/claude-code-action/main/src
+      - ../../test:/home/runner/work/_actions/anthropics/claude-code-action/main/test

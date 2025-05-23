@@ -119,10 +119,10 @@ server.tool(
       // 3. Create tree entries for all files
       const treeEntries = await Promise.all(
         processedFiles.map(async (filePath) => {
-          const fullPath = filePath.startsWith('/') 
-            ? filePath 
+          const fullPath = filePath.startsWith("/")
+            ? filePath
             : join(REPO_DIR, filePath);
-          
+
           const content = await readFile(fullPath, "utf-8");
           return {
             path: filePath,
@@ -229,7 +229,8 @@ server.tool(
         ],
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       return {
         content: [
           {
@@ -422,7 +423,8 @@ server.tool(
         ],
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       return {
         content: [
           {

@@ -1,0 +1,71 @@
+name: Test MCP Server Fix
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test-mcp-fix
+
+jobs:
+  test-mcp-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup test environment
+        run: |
+          echo "GitHub Workspace: $GITHUB_WORKSPACE"
+          echo "Current directory: $(pwd)"
+          echo "Action Path: $GITHUB_ACTION_PATH"
+
+          # Create test files that Claude would modify
+          mkdir -p api/api/sampling/stages
+          echo "Original content" > api/api/sampling/stages/partial_completion_processing.py
+
+      - name: Test the MCP server directly
+        run: |
+          # Install dependencies
+          npm install @modelcontextprotocol/sdk zod node-fetch
+
+          # Create a test script that simulates what Claude would do
+          cat > test-mcp-commit.js << 'EOF'
+          const { spawn } = require('child_process');
+          const path = require('path');
+
+          // Start the MCP server with environment variables
+          const serverPath = path.join(__dirname, 'src/mcp/github-file-ops-server.ts');
+          const server = spawn('node', [serverPath], {
+            env: {
+              ...process.env,
+              REPO_OWNER: 'test-owner',
+              REPO_NAME: 'test-repo',
+              BRANCH_NAME: 'main',
+              REPO_DIR: process.env.GITHUB_WORKSPACE || process.cwd(),
+              GITHUB_TOKEN: 'test-token'
+            },
+            stdio: ['pipe', 'pipe', 'pipe']
+          });
+
+          // Listen for server output
+          server.stdout.on('data', (data) => {
+            console.log('Server stdout:', data.toString());
+          });
+
+          server.stderr.on('data', (data) => {
+            console.error('Server stderr:', data.toString());
+          });
+
+          // Give server time to start
+          setTimeout(() => {
+            console.log('Test completed');
+            server.kill();
+          }, 3000);
+          EOF
+
+          node test-mcp-commit.js
+
+      - name: Test with Claude Code (if available)
+        run: |
+          echo "This step would run Claude Code with the fixed MCP server"
+          # This is where you'd actually run the claude-code-action
