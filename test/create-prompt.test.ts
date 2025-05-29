@@ -722,4 +722,51 @@ describe("buildDisallowedToolsString", () => {
     expect(parts).toContain("BadTool1");
     expect(parts).toContain("BadTool2");
   });
+
+  test("should remove hardcoded disallowed tools if they are in allowed tools", () => {
+    const customDisallowedTools = "BadTool1,BadTool2";
+    const allowedTools = "WebSearch,SomeOtherTool";
+    const result = buildDisallowedToolsString(
+      customDisallowedTools,
+      allowedTools,
+    );
+
+    // WebSearch should be removed from disallowed since it's in allowed
+    expect(result).not.toContain("WebSearch");
+
+    // WebFetch should still be disallowed since it's not in allowed
+    expect(result).toContain("WebFetch");
+
+    // Custom disallowed tools should still be present
+    expect(result).toContain("BadTool1");
+    expect(result).toContain("BadTool2");
+  });
+
+  test("should remove all hardcoded disallowed tools if they are all in allowed tools", () => {
+    const allowedTools = "WebSearch,WebFetch,SomeOtherTool";
+    const result = buildDisallowedToolsString(undefined, allowedTools);
+
+    // Both hardcoded disallowed tools should be removed
+    expect(result).not.toContain("WebSearch");
+    expect(result).not.toContain("WebFetch");
+
+    // Result should be empty since no custom disallowed tools provided
+    expect(result).toBe("");
+  });
+
+  test("should handle custom disallowed tools when all hardcoded tools are overridden", () => {
+    const customDisallowedTools = "BadTool1,BadTool2";
+    const allowedTools = "WebSearch,WebFetch";
+    const result = buildDisallowedToolsString(
+      customDisallowedTools,
+      allowedTools,
+    );
+
+    // Hardcoded tools should be removed
+    expect(result).not.toContain("WebSearch");
+    expect(result).not.toContain("WebFetch");
+
+    // Only custom disallowed tools should remain
+    expect(result).toBe("BadTool1,BadTool2");
+  });
 });

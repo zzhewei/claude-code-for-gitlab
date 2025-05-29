@@ -58,10 +58,27 @@ export function buildAllowedToolsString(
 
 export function buildDisallowedToolsString(
   customDisallowedTools?: string,
+  allowedTools?: string,
 ): string {
-  let allDisallowedTools = DISALLOWED_TOOLS.join(",");
+  let disallowedTools = [...DISALLOWED_TOOLS];
+
+  // If user has explicitly allowed some hardcoded disallowed tools, remove them from disallowed list
+  if (allowedTools) {
+    const allowedToolsArray = allowedTools
+      .split(",")
+      .map((tool) => tool.trim());
+    disallowedTools = disallowedTools.filter(
+      (tool) => !allowedToolsArray.includes(tool),
+    );
+  }
+
+  let allDisallowedTools = disallowedTools.join(",");
   if (customDisallowedTools) {
-    allDisallowedTools = `${allDisallowedTools},${customDisallowedTools}`;
+    if (allDisallowedTools) {
+      allDisallowedTools = `${allDisallowedTools},${customDisallowedTools}`;
+    } else {
+      allDisallowedTools = customDisallowedTools;
+    }
   }
   return allDisallowedTools;
 }
@@ -648,6 +665,7 @@ export async function createPrompt(
     );
     const allDisallowedTools = buildDisallowedToolsString(
       preparedContext.disallowedTools,
+      preparedContext.allowedTools,
     );
 
     core.exportVariable("ALLOWED_TOOLS", allAllowedTools);
