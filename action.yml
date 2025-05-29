@@ -110,6 +110,9 @@ runs:
         ANTHROPIC_MODEL: ${{ inputs.model || inputs.anthropic_model }}
         GITHUB_TOKEN: ${{ steps.prepare.outputs.GITHUB_TOKEN }}
 
+        # Provider configuration
+        ANTHROPIC_BASE_URL: ${{ env.ANTHROPIC_BASE_URL }}
+
         # AWS configuration
         AWS_REGION: ${{ env.AWS_REGION }}
         AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
