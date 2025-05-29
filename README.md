@@ -33,6 +33,10 @@ This command will guide you through setting up the GitHub app and required secre
 2. Add `ANTHROPIC_API_KEY` to your repository secrets ([Learn how to use secrets in GitHub Actions](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions))
 3. Copy the workflow file from [`examples/claude.yml`](./examples/claude.yml) into your repository's `.github/workflows/`
 
+## 📚 FAQ
+
+Having issues or questions? Check out our [Frequently Asked Questions](./FAQ.md) for solutions to common problems and detailed explanations of Claude's capabilities and limitations.
+
 ## Usage
 
 Add a workflow file to your repository (e.g., `.github/workflows/claude.yml`):
