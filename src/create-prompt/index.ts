@@ -9,8 +9,8 @@ import {
   formatComments,
   formatReviewComments,
   formatChangedFilesWithSHA,
-  stripHtmlComments,
 } from "../github/data/formatter";
+import { sanitizeContent } from "../github/utils/sanitizer";
 import {
   isIssuesEvent,
   isIssueCommentEvent,
@@ -436,14 +436,14 @@ ${
     eventData.eventName === "pull_request_review") &&
   eventData.commentBody
     ? `<trigger_comment>
-${stripHtmlComments(eventData.commentBody)}
+${sanitizeContent(eventData.commentBody)}
 </trigger_comment>`
     : ""
 }
 ${
   context.directPrompt
     ? `<direct_prompt>
-${stripHtmlComments(context.directPrompt)}
+${sanitizeContent(context.directPrompt)}
 </direct_prompt>`
     : ""
 }
