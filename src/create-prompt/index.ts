@@ -86,7 +86,7 @@ export function buildDisallowedToolsString(
 export function prepareContext(
   context: ParsedGitHubContext,
   claudeCommentId: string,
-  defaultBranch?: string,
+  baseBranch?: string,
   claudeBranch?: string,
 ): PreparedContext {
   const repository = context.repository.full_name;
@@ -164,7 +164,7 @@ export function prepareContext(
         ...(commentId && { commentId }),
         commentBody,
         ...(claudeBranch && { claudeBranch }),
-        ...(defaultBranch && { defaultBranch }),
+        ...(baseBranch && { baseBranch }),
       };
       break;
 
@@ -186,7 +186,7 @@ export function prepareContext(
         prNumber,
         commentBody,
         ...(claudeBranch && { claudeBranch }),
-        ...(defaultBranch && { defaultBranch }),
+        ...(baseBranch && { baseBranch }),
       };
       break;
 
@@ -211,13 +211,13 @@ export function prepareContext(
           prNumber,
           commentBody,
           ...(claudeBranch && { claudeBranch }),
-          ...(defaultBranch && { defaultBranch }),
+          ...(baseBranch && { baseBranch }),
         };
         break;
       } else if (!claudeBranch) {
         throw new Error("CLAUDE_BRANCH is required for issue_comment event");
-      } else if (!defaultBranch) {
-        throw new Error("DEFAULT_BRANCH is required for issue_comment event");
+      } else if (!baseBranch) {
+        throw new Error("BASE_BRANCH is required for issue_comment event");
       } else if (!issueNumber) {
         throw new Error(
           "ISSUE_NUMBER is required for issue_comment event for issues",
@@ -229,7 +229,7 @@ export function prepareContext(
         commentId,
         isPR: false,
         claudeBranch: claudeBranch,
-        defaultBranch,
+        baseBranch,
         issueNumber,
         commentBody,
       };
@@ -245,8 +245,8 @@ export function prepareContext(
       if (isPR) {
         throw new Error("IS_PR must be false for issues event");
       }
-      if (!defaultBranch) {
-        throw new Error("DEFAULT_BRANCH is required for issues event");
+      if (!baseBranch) {
+        throw new Error("BASE_BRANCH is required for issues event");
       }
       if (!claudeBranch) {
         throw new Error("CLAUDE_BRANCH is required for issues event");
@@ -263,7 +263,7 @@ export function prepareContext(
           eventAction: "assigned",
           isPR: false,
           issueNumber,
-          defaultBranch,
+          baseBranch,
           claudeBranch,
           assigneeTrigger,
         };
@@ -273,7 +273,7 @@ export function prepareContext(
           eventAction: "opened",
           isPR: false,
           issueNumber,
-          defaultBranch,
+          baseBranch,
           claudeBranch,
         };
       } else {
@@ -294,7 +294,7 @@ export function prepareContext(
         isPR: true,
         prNumber,
         ...(claudeBranch && { claudeBranch }),
-        ...(defaultBranch && { defaultBranch }),
+        ...(baseBranch && { baseBranch }),
       };
       break;
 
@@ -541,13 +541,13 @@ ${context.directPrompt ? `   - DIRECT INSTRUCTION: A direct instruction was prov
       ${
         eventData.claudeBranch
           ? `- Provide a URL to create a PR manually in this format:
-        [Create a PR](${GITHUB_SERVER_URL}/${context.repository}/compare/${eventData.defaultBranch}...<branch-name>?quick_pull=1&title=<url-encoded-title>&body=<url-encoded-body>)
+        [Create a PR](${GITHUB_SERVER_URL}/${context.repository}/compare/${eventData.baseBranch}...<branch-name>?quick_pull=1&title=<url-encoded-title>&body=<url-encoded-body>)
         - IMPORTANT: Use THREE dots (...) between branch names, not two (..)
           Example: ${GITHUB_SERVER_URL}/${context.repository}/compare/main...feature-branch (correct)
           NOT: ${GITHUB_SERVER_URL}/${context.repository}/compare/main..feature-branch (incorrect)
         - IMPORTANT: Ensure all URL parameters are properly encoded - spaces should be encoded as %20, not left as spaces
           Example: Instead of "fix: update welcome message", use "fix%3A%20update%20welcome%20message"
-        - The target-branch should be '${eventData.defaultBranch}'.
+        - The target-branch should be '${eventData.baseBranch}'.
         - The branch-name is the current branch: ${eventData.claudeBranch}
         - The body should include:
           - A clear description of the changes
@@ -632,7 +632,7 @@ f. If you are unable to complete certain steps, such as running a linter or test
 
 export async function createPrompt(
   claudeCommentId: number,
-  defaultBranch: string | undefined,
+  baseBranch: string | undefined,
   claudeBranch: string | undefined,
   githubData: FetchDataResult,
   context: ParsedGitHubContext,
@@ -641,7 +641,7 @@ export async function createPrompt(
     const preparedContext = prepareContext(
       context,
       claudeCommentId.toString(),
-      defaultBranch,
+      baseBranch,
       claudeBranch,
     );
 

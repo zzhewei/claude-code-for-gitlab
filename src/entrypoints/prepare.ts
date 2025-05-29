@@ -77,7 +77,7 @@ async function run() {
     // Step 10: Create prompt file
     await createPrompt(
       commentId,
-      branchInfo.defaultBranch,
+      branchInfo.baseBranch,
       branchInfo.claudeBranch,
       githubData,
       context,
