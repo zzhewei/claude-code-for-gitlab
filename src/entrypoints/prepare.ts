@@ -92,7 +92,10 @@ async function run() {
     );
     core.setOutput("mcp_config", mcpConfig);
   } catch (error) {
-    core.setFailed(`Prepare step failed with error: ${error}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    core.setFailed(`Prepare step failed with error: ${errorMessage}`);
+    // Also output the clean error message for the action to capture
+    core.setOutput("prepare_error", errorMessage);
     process.exit(1);
   }
 }
