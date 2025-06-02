@@ -25,12 +25,12 @@ describe("prepareMcpConfig", () => {
   });
 
   test("should return base config when no additional config is provided", async () => {
-    const result = await prepareMcpConfig(
-      "test-token",
-      "test-owner",
-      "test-repo",
-      "test-branch",
-    );
+    const result = await prepareMcpConfig({
+      githubToken: "test-token",
+      owner: "test-owner",
+      repo: "test-repo",
+      branch: "test-branch",
+    });
 
     const parsed = JSON.parse(result);
     expect(parsed.mcpServers).toBeDefined();
@@ -50,13 +50,13 @@ describe("prepareMcpConfig", () => {
   });
 
   test("should return base config when additional config is empty string", async () => {
-    const result = await prepareMcpConfig(
-      "test-token",
-      "test-owner",
-      "test-repo",
-      "test-branch",
-      "",
-    );
+    const result = await prepareMcpConfig({
+      githubToken: "test-token",
+      owner: "test-owner",
+      repo: "test-repo",
+      branch: "test-branch",
+      additionalMcpConfig: "",
+    });
 
     const parsed = JSON.parse(result);
     expect(parsed.mcpServers).toBeDefined();
@@ -66,13 +66,13 @@ describe("prepareMcpConfig", () => {
   });
 
   test("should return base config when additional config is whitespace only", async () => {
-    const result = await prepareMcpConfig(
-      "test-token",
-      "test-owner",
-      "test-repo",
-      "test-branch",
-      "   \n\t  ",
-    );
+    const result = await prepareMcpConfig({
+      githubToken: "test-token",
+      owner: "test-owner",
+      repo: "test-repo",
+      branch: "test-branch",
+      additionalMcpConfig: "   \n\t  ",
+    });
 
     const parsed = JSON.parse(result);
     expect(parsed.mcpServers).toBeDefined();
@@ -94,13 +94,13 @@ describe("prepareMcpConfig", () => {
       },
     });
 
-    const result = await prepareMcpConfig(
-      "test-token",
-      "test-owner",
-      "test-repo",
-      "test-branch",
-      additionalConfig,
-    );
+    const result = await prepareMcpConfig({
+      githubToken: "test-token",
+      owner: "test-owner",
+      repo: "test-repo",
+      branch: "test-branch",
+      additionalMcpConfig: additionalConfig,
+    });
 
     const parsed = JSON.parse(result);
     expect(consoleInfoSpy).toHaveBeenCalledWith(
@@ -127,13 +127,13 @@ describe("prepareMcpConfig", () => {
       },
     });
 
-    const result = await prepareMcpConfig(
-      "test-token",
-      "test-owner",
-      "test-repo",
-      "test-branch",
-      additionalConfig,
-    );
+    const result = await prepareMcpConfig({
+      githubToken: "test-token",
+      owner: "test-owner",
+      repo: "test-repo",
+      branch: "test-branch",
+      additionalMcpConfig: additionalConfig,
+    });
 
     const parsed = JSON.parse(result);
     expect(consoleInfoSpy).toHaveBeenCalledWith(
@@ -163,13 +163,13 @@ describe("prepareMcpConfig", () => {
       },
     });
 
-    const result = await prepareMcpConfig(
-      "test-token",
-      "test-owner",
-      "test-repo",
-      "test-branch",
-      additionalConfig,
-    );
+    const result = await prepareMcpConfig({
+      githubToken: "test-token",
+      owner: "test-owner",
+      repo: "test-repo",
+      branch: "test-branch",
+      additionalMcpConfig: additionalConfig,
+    });
 
     const parsed = JSON.parse(result);
     expect(parsed.customProperty).toBe("custom-value");
@@ -181,13 +181,13 @@ describe("prepareMcpConfig", () => {
   test("should handle invalid JSON gracefully", async () => {
     const invalidJson = "{ invalid json }";
 
-    const result = await prepareMcpConfig(
-      "test-token",
-      "test-owner",
-      "test-repo",
-      "test-branch",
-      invalidJson,
-    );
+    const result = await prepareMcpConfig({
+      githubToken: "test-token",
+      owner: "test-owner",
+      repo: "test-repo",
+      branch: "test-branch",
+      additionalMcpConfig: invalidJson,
+    });
 
     const parsed = JSON.parse(result);
     expect(consoleWarningSpy).toHaveBeenCalledWith(
@@ -200,13 +200,13 @@ describe("prepareMcpConfig", () => {
   test("should handle non-object JSON values", async () => {
     const nonObjectJson = JSON.stringify("string value");
 
-    const result = await prepareMcpConfig(
-      "test-token",
-      "test-owner",
-      "test-repo",
-      "test-branch",
-      nonObjectJson,
-    );
+    const result = await prepareMcpConfig({
+      githubToken: "test-token",
+      owner: "test-owner",
+      repo: "test-repo",
+      branch: "test-branch",
+      additionalMcpConfig: nonObjectJson,
+    });
 
     const parsed = JSON.parse(result);
     expect(consoleWarningSpy).toHaveBeenCalledWith(
@@ -222,13 +222,13 @@ describe("prepareMcpConfig", () => {
   test("should handle null JSON value", async () => {
     const nullJson = JSON.stringify(null);
 
-    const result = await prepareMcpConfig(
-      "test-token",
-      "test-owner",
-      "test-repo",
-      "test-branch",
-      nullJson,
-    );
+    const result = await prepareMcpConfig({
+      githubToken: "test-token",
+      owner: "test-owner",
+      repo: "test-repo",
+      branch: "test-branch",
+      additionalMcpConfig: nullJson,
+    });
 
     const parsed = JSON.parse(result);
     expect(consoleWarningSpy).toHaveBeenCalledWith(
@@ -244,13 +244,13 @@ describe("prepareMcpConfig", () => {
   test("should handle array JSON value", async () => {
     const arrayJson = JSON.stringify([1, 2, 3]);
 
-    const result = await prepareMcpConfig(
-      "test-token",
-      "test-owner",
-      "test-repo",
-      "test-branch",
-      arrayJson,
-    );
+    const result = await prepareMcpConfig({
+      githubToken: "test-token",
+      owner: "test-owner",
+      repo: "test-repo",
+      branch: "test-branch",
+      additionalMcpConfig: arrayJson,
+    });
 
     const parsed = JSON.parse(result);
     // Arrays are objects in JavaScript, so they pass the object check
@@ -289,13 +289,13 @@ describe("prepareMcpConfig", () => {
       },
     });
 
-    const result = await prepareMcpConfig(
-      "test-token",
-      "test-owner",
-      "test-repo",
-      "test-branch",
-      additionalConfig,
-    );
+    const result = await prepareMcpConfig({
+      githubToken: "test-token",
+      owner: "test-owner",
+      repo: "test-repo",
+      branch: "test-branch",
+      additionalMcpConfig: additionalConfig,
+    });
 
     const parsed = JSON.parse(result);
     expect(parsed.mcpServers.server1).toBeDefined();
@@ -310,12 +310,12 @@ describe("prepareMcpConfig", () => {
     const oldEnv = process.env.GITHUB_ACTION_PATH;
     process.env.GITHUB_ACTION_PATH = "/test/action/path";
 
-    const result = await prepareMcpConfig(
-      "test-token",
-      "test-owner",
-      "test-repo",
-      "test-branch",
-    );
+    const result = await prepareMcpConfig({
+      githubToken: "test-token",
+      owner: "test-owner",
+      repo: "test-repo",
+      branch: "test-branch",
+    });
 
     const parsed = JSON.parse(result);
     expect(parsed.mcpServers.github_file_ops.args[1]).toBe(
@@ -329,12 +329,12 @@ describe("prepareMcpConfig", () => {
     const oldEnv = process.env.GITHUB_WORKSPACE;
     delete process.env.GITHUB_WORKSPACE;
 
-    const result = await prepareMcpConfig(
-      "test-token",
-      "test-owner",
-      "test-repo",
-      "test-branch",
-    );
+    const result = await prepareMcpConfig({
+      githubToken: "test-token",
+      owner: "test-owner",
+      repo: "test-repo",
+      branch: "test-branch",
+    });
 
     const parsed = JSON.parse(result);
     expect(parsed.mcpServers.github_file_ops.env.REPO_DIR).toBe(process.cwd());

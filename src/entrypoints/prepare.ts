@@ -85,13 +85,14 @@ async function run() {
 
     // Step 11: Get MCP configuration
     const additionalMcpConfig = process.env.MCP_CONFIG || "";
-    const mcpConfig = await prepareMcpConfig(
+    const mcpConfig = await prepareMcpConfig({
       githubToken,
-      context.repository.owner,
-      context.repository.repo,
-      branchInfo.currentBranch,
+      owner: context.repository.owner,
+      repo: context.repository.repo,
+      branch: branchInfo.currentBranch,
       additionalMcpConfig,
-    );
+      claudeCommentId: commentId.toString(),
+    });
     core.setOutput("mcp_config", mcpConfig);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

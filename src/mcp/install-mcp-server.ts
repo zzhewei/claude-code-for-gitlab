@@ -1,12 +1,25 @@
 import * as core from "@actions/core";
 
+type PrepareConfigParams = {
+  githubToken: string;
+  owner: string;
+  repo: string;
+  branch: string;
+  additionalMcpConfig?: string;
+  claudeCommentId?: string;
+};
+
 export async function prepareMcpConfig(
-  githubToken: string,
-  owner: string,
-  repo: string,
-  branch: string,
-  additionalMcpConfig?: string,
+  params: PrepareConfigParams,
 ): Promise<string> {
+  const {
+    githubToken,
+    owner,
+    repo,
+    branch,
+    additionalMcpConfig,
+    claudeCommentId,
+  } = params;
   try {
     const baseMcpConfig = {
       mcpServers: {
@@ -36,6 +49,9 @@ export async function prepareMcpConfig(
             REPO_NAME: repo,
             BRANCH_NAME: branch,
             REPO_DIR: process.env.GITHUB_WORKSPACE || process.cwd(),
+            ...(claudeCommentId && { CLAUDE_COMMENT_ID: claudeCommentId }),
+            GITHUB_EVENT_NAME: process.env.GITHUB_EVENT_NAME || "",
+            IS_PR: process.env.IS_PR || "false",
           },
         },
       },
