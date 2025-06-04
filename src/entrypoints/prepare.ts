@@ -92,6 +92,7 @@ async function run() {
       branch: branchInfo.currentBranch,
       additionalMcpConfig,
       claudeCommentId: commentId.toString(),
+      allowedTools: context.inputs.allowedTools,
     });
     core.setOutput("mcp_config", mcpConfig);
   } catch (error) {

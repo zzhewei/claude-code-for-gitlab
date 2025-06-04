@@ -652,7 +652,7 @@ describe("buildAllowedToolsString", () => {
   });
 
   test("should append custom tools when provided", () => {
-    const customTools = "Tool1,Tool2,Tool3";
+    const customTools = ["Tool1", "Tool2", "Tool3"];
     const result = buildAllowedToolsString(customTools);
 
     // Base tools should be present
@@ -683,7 +683,7 @@ describe("buildDisallowedToolsString", () => {
   });
 
   test("should append custom disallowed tools when provided", () => {
-    const customDisallowedTools = "BadTool1,BadTool2";
+    const customDisallowedTools = ["BadTool1", "BadTool2"];
     const result = buildDisallowedToolsString(customDisallowedTools);
 
     // Base disallowed tools should be present
@@ -701,8 +701,8 @@ describe("buildDisallowedToolsString", () => {
   });
 
   test("should remove hardcoded disallowed tools if they are in allowed tools", () => {
-    const customDisallowedTools = "BadTool1,BadTool2";
-    const allowedTools = "WebSearch,SomeOtherTool";
+    const customDisallowedTools = ["BadTool1", "BadTool2"];
+    const allowedTools = ["WebSearch", "SomeOtherTool"];
     const result = buildDisallowedToolsString(
       customDisallowedTools,
       allowedTools,
@@ -720,7 +720,7 @@ describe("buildDisallowedToolsString", () => {
   });
 
   test("should remove all hardcoded disallowed tools if they are all in allowed tools", () => {
-    const allowedTools = "WebSearch,WebFetch,SomeOtherTool";
+    const allowedTools = ["WebSearch", "WebFetch", "SomeOtherTool"];
     const result = buildDisallowedToolsString(undefined, allowedTools);
 
     // Both hardcoded disallowed tools should be removed
@@ -732,8 +732,8 @@ describe("buildDisallowedToolsString", () => {
   });
 
   test("should handle custom disallowed tools when all hardcoded tools are overridden", () => {
-    const customDisallowedTools = "BadTool1,BadTool2";
-    const allowedTools = "WebSearch,WebFetch";
+    const customDisallowedTools = ["BadTool1", "BadTool2"];
+    const allowedTools = ["WebSearch", "WebFetch"];
     const result = buildDisallowedToolsString(
       customDisallowedTools,
       allowedTools,

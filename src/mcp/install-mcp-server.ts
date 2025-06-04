@@ -7,6 +7,7 @@ type PrepareConfigParams = {
   branch: string;
   additionalMcpConfig?: string;
   claudeCommentId?: string;
+  allowedTools: string[];
 };
 
 export async function prepareMcpConfig(
@@ -19,24 +20,17 @@ export async function prepareMcpConfig(
     branch,
     additionalMcpConfig,
     claudeCommentId,
+    allowedTools,
   } = params;
   try {
-    const baseMcpConfig = {
+    const allowedToolsList = allowedTools || [];
+
+    const hasGitHubMcpTools = allowedToolsList.some((tool) =>
+      tool.startsWith("mcp__github__"),
+    );
+
+    const baseMcpConfig: { mcpServers: Record<string, unknown> } = {
       mcpServers: {
-        github: {
-          command: "docker",
-          args: [
-            "run",
-            "-i",
-            "--rm",
-            "-e",
-            "GITHUB_PERSONAL_ACCESS_TOKEN",
-            "ghcr.io/github/github-mcp-server:sha-e9f748f", // https://github.com/github/github-mcp-server/releases/tag/v0.4.0
-          ],
-          env: {
-            GITHUB_PERSONAL_ACCESS_TOKEN: githubToken,
-          },
-        },
         github_file_ops: {
           command: "bun",
           args: [
@@ -56,6 +50,23 @@ export async function prepareMcpConfig(
         },
       },
     };
+
+    if (hasGitHubMcpTools) {
+      baseMcpConfig.mcpServers.github = {
+        command: "docker",
+        args: [
+          "run",
+          "-i",
+          "--rm",
+          "-e",
+          "GITHUB_PERSONAL_ACCESS_TOKEN",
+          "ghcr.io/github/github-mcp-server:sha-e9f748f", // https://github.com/github/github-mcp-server/releases/tag/v0.4.0
+        ],
+        env: {
+          GITHUB_PERSONAL_ACCESS_TOKEN: githubToken,
+        },
+      };
+    }
 
     // Merge with additional MCP config if provided
     if (additionalMcpConfig && additionalMcpConfig.trim()) {
