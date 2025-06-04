@@ -31,7 +31,7 @@ export async function prepareMcpConfig(
             "--rm",
             "-e",
             "GITHUB_PERSONAL_ACCESS_TOKEN",
-            "ghcr.io/anthropics/github-mcp-server:sha-7382253",
+            "ghcr.io/github/github-mcp-server:sha-e9f748f", // https://github.com/github/github-mcp-server/releases/tag/v0.4.0
           ],
           env: {
             GITHUB_PERSONAL_ACCESS_TOKEN: githubToken,
