@@ -620,7 +620,9 @@ export async function createPrompt(
       claudeBranch,
     );
 
-    await mkdir("/tmp/claude-prompts", { recursive: true });
+    await mkdir(`${process.env.RUNNER_TEMP}/claude-prompts`, {
+      recursive: true,
+    });
 
     // Generate the prompt
     const promptContent = generatePrompt(preparedContext, githubData);
@@ -631,7 +633,10 @@ export async function createPrompt(
     console.log("=======================");
 
     // Write the prompt file
-    await writeFile("/tmp/claude-prompts/claude-prompt.txt", promptContent);
+    await writeFile(
+      `${process.env.RUNNER_TEMP}/claude-prompts/claude-prompt.txt`,
+      promptContent,
+    );
 
     // Set allowed tools
     const allAllowedTools = buildAllowedToolsString(

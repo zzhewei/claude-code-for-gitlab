@@ -107,7 +107,7 @@ runs:
       if: steps.prepare.outputs.contains_trigger == 'true'
       uses: anthropics/claude-code-base-action@1370ac97fbba9bddec20ea2924b5726bf10d8b94 # v0.0.9
       with:
-        prompt_file: /tmp/claude-prompts/claude-prompt.txt
+        prompt_file: ${{ runner.temp }}/claude-prompts/claude-prompt.txt
         allowed_tools: ${{ env.ALLOWED_TOOLS }}
         disallowed_tools: ${{ env.DISALLOWED_TOOLS }}
         timeout_minutes: ${{ inputs.timeout_minutes }}
