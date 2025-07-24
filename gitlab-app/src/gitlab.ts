@@ -8,22 +8,28 @@ export async function triggerPipeline(
   ref: string,
   variables?: Record<string, string>,
 ): Promise<number> {
+  // First, we need to create or get a pipeline trigger token
+  // For now, we'll use the simpler approach: create pipeline with JSON body
   const url = `${BASE}/api/v4/projects/${projectId}/pipeline`;
 
-  const body = new URLSearchParams({ ref });
+  const body: any = { ref };
+  
+  // Add variables as an array of objects for the pipeline creation endpoint
   if (variables) {
-    for (const [key, value] of Object.entries(variables)) {
-      body.append(`variables[${key}]`, value);
-    }
+    body.variables = Object.entries(variables).map(([key, value]) => ({
+      key,
+      value,
+      variable_type: "env_var"
+    }));
   }
 
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "PRIVATE-TOKEN": TOKEN,
-      "Content-Type": "application/x-www-form-urlencoded",
+      "Content-Type": "application/json",
     },
-    body: body.toString(),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
