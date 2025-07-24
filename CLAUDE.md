@@ -4,138 +4,200 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a GitHub Action that integrates Claude into GitHub workflows, forked with the intention of adding GitLab support. The action enables Claude to respond to comments, review code, implement changes, and interact with PRs/issues.
-
-## Development Environment
-
-- **Runtime**: Bun 1.2.11
-- **Language**: TypeScript with strict type checking
-- **Package Manager**: Bun
-
-## Development Commands
-
-### Setup and Installation
-
-```bash
-# Install dependencies
-bun install
-
-# Install git pre-push hooks
-bun run install-hooks
-```
-
-### Core Development Tasks
-
-```bash
-# Run tests
-bun test
-
-# Type checking
-bun run typecheck
-
-# Format code
-bun run format
-
-# Check formatting (no changes)
-bun run format:check
-```
-
-### Development Workflow
-
-After making changes, the pre-push hook automatically runs:
-
-1. Format check (auto-formats if needed)
-2. TypeScript type checking
-3. Test suite
-
-To run these checks manually before pushing:
-
-```bash
-bun run format:check && bun run typecheck && bun test
-```
+This is a **GitLab OAuth Application** that integrates Claude AI directly into GitLab workflows. It provides a web-based dashboard for managing Claude integration across multiple GitLab projects, with intelligent webhook handling for real-time responses to issues, merge requests, and comments.
 
 ## Architecture
 
 ### Technology Stack
 
-- **Runtime**: Bun (v1.2.11+)
-- **Language**: TypeScript (strict mode)
-- **Key Libraries**:
-  - @modelcontextprotocol/sdk (MCP support)
-  - @octokit/\* (GitHub API)
-  - zod (schema validation)
-
-### Two-Layer Structure
-
-1. **Main Action Layer** (`/src/`): GitHub-specific integrations, triggers, and orchestration
-2. **Base Action Layer** (`/base-action/`): Core Claude Code execution logic
+- **Backend**: Node.js + Express.js + TypeScript
+- **Frontend**: React 18 + Vite + TypeScript  
+- **Package Manager**: Bun (for dependency management)
+- **Runtime**: Node.js (for production deployment)
+- **Storage**: Encrypted JSON files (no database required)
+- **Authentication**: GitLab OAuth2 with session management
+- **Deployment**: Docker + Docker Compose with optional Cloudflare Tunnel
 
 ### Project Structure
 
 ```
-├── src/
-│   ├── entrypoints/      # Main entry points
-│   ├── github/           # GitHub-specific logic
-│   ├── providers/        # AI provider abstraction
-│   ├── mcp/             # MCP server integration
-│   ├── create-prompt/    # Prompt generation
-│   └── utils/           # Shared utilities
-├── test/                # Test files
-├── examples/            # Example workflows
-└── action.yml          # GitHub Action metadata
+gitlab-app/
+├── server/                    # Express.js backend
+│   ├── routes/               # API and auth routes
+│   ├── services/             # Claude AI integration
+│   ├── utils/                # Configuration and utilities
+│   └── server.ts             # Main server entry point
+├── client/                   # React frontend (SPA)
+│   ├── src/
+│   │   ├── components/       # Reusable React components
+│   │   ├── pages/            # Page components (Dashboard, Settings)
+│   │   ├── hooks/            # Custom React hooks
+│   │   ├── types/            # TypeScript type definitions
+│   │   └── utils/            # API client utilities
+│   ├── index.html            # HTML entry point
+│   ├── vite.config.ts        # Vite configuration
+│   └── package.json          # Client dependencies
+├── docker-compose.yml        # Multi-service deployment
+├── Dockerfile               # Multi-stage build
+└── package.json             # Server dependencies and scripts
 ```
 
-### Key Components
+## Development Environment
 
-- **Trigger System** (`src/check-trigger.ts`): Detects `@claude` mentions in comments/issues
-- **Context Gathering** (`src/github/github-data-fetcher.ts`): Fetches PR/issue data, comments, files
-- **Branch Management** (`src/github/branch-manager.ts`): Creates and manages branches for Claude's work
-- **Progress Tracking** (`src/update-comment-with-link.ts`): Updates single comment with checkboxes
-- **MCP Integration** (`src/mcp/`): Extends Claude's capabilities with GitHub-specific tools
+### Prerequisites
 
-### Authentication Flow
+- **Node.js**: v18.0.0 or higher
+- **Bun**: v1.0.0 or higher (for package management)
+- **Docker**: For containerized deployment
 
-1. GitHub App or Personal Access Token authentication
-2. OIDC token exchange for secure GitHub interactions
-3. Token passed to MCP servers for API access
-
-## GitLab Support Considerations
-
-The codebase is currently GitHub-specific. To add GitLab support:
-
-1. **Abstract VCS Layer**: Create interfaces in a new `/src/vcs/` directory for common operations
-2. **Implement GitLab Providers**: Mirror `/src/github/` structure in `/src/gitlab/`
-3. **Adapt Authentication**: GitLab uses different auth mechanisms (personal/project/group tokens)
-4. **Update MCP Servers**: Make VCS-agnostic or create GitLab-specific versions
-5. **Modify Entry Points**: Add VCS detection in `/src/entrypoints/`
-
-### Key Files for GitLab Integration
-
-- `/src/github/` → Need parallel `/src/gitlab/` implementation
-- `/src/check-trigger.ts` → Make VCS-agnostic
-- `/src/entrypoints/prepare.ts` → Add VCS detection logic
-- `/src/mcp/install-mcp-servers.ts` → Support GitLab MCP servers
-- `action.yml` → Create `.gitlab-ci.yml` equivalent
-
-## Testing
-
-Tests use Bun's built-in test runner. Test files are in `/test/` directory.
+### Setup and Installation
 
 ```bash
-# Run all tests
-bun test
+# Install all dependencies (server + client)
+cd gitlab-app && bun run install:all
 
-# Run specific test file
-bun test test/github-data-formatter.test.ts
+# Or install separately
+bun install                    # Server dependencies
+cd client && bun install      # Client dependencies
 ```
+
+### Development Commands
+
+```bash
+# Development (runs both server and client in parallel)
+bun run dev:both              # Recommended for full-stack development
+bun run dev:server            # Backend only (port 3000)
+bun run dev:client            # Frontend only (port 5173)
+
+# Building
+bun run build                 # Build both server and client
+bun run build:server          # TypeScript compilation
+bun run build:client          # Vite production build
+
+# Type checking
+bun run typecheck             # Check both server and client
+
+# Production
+bun run start                 # Start production server
+```
+
+### Development Workflow
+
+1. **Backend Development**: Express server runs on `http://localhost:3000`
+2. **Frontend Development**: Vite dev server runs on `http://localhost:5173` with proxy to backend
+3. **Full-Stack**: Use `bun run dev:both` to run both servers simultaneously
+
+## Key Components
+
+### Backend (Express.js)
+
+- **OAuth Routes** (`server/routes/auth.ts`): GitLab OAuth2 flow and session management
+- **API Routes** (`server/routes/api.ts`): Project management and configuration APIs
+- **Webhook Handler** (`server/routes/webhook.ts`): GitLab webhook processing
+- **Claude Integration** (`server/services/claude-handler.ts`): AI response generation
+- **Data Storage** (`server/utils/config.ts`): Encrypted JSON storage with AES encryption
+
+### Frontend (React SPA)
+
+- **Authentication** (`client/src/hooks/useAuth.tsx`): Session-based auth with React Query
+- **Project Management** (`client/src/hooks/useProjects.tsx`): GitLab project integration
+- **Dashboard** (`client/src/pages/Dashboard.tsx`): Main project overview and management
+- **Settings** (`client/src/pages/ProjectSettings.tsx`): Per-project Claude configuration
+- **Components**: Reusable UI components with inline styling (no CSS framework dependency)
+
+## Authentication & Security
+
+### GitLab OAuth2 Flow
+
+1. User clicks "Login with GitLab" → redirects to GitLab OAuth
+2. GitLab redirects back with authorization code
+3. Server exchanges code for access/refresh tokens
+4. User session created with encrypted token storage
+5. React app receives user data via `/auth/me` endpoint
+
+### Data Encryption
+
+- **User tokens**: AES-256-GCM encryption for OAuth tokens
+- **Session data**: Express-session with configurable secrets  
+- **Storage**: JSON files with encrypted sensitive fields
+
+### Security Features
+
+- **CORS**: Configured for development and production origins
+- **Helmet**: Security headers and CSP policies
+- **Session Management**: HTTPOnly cookies with configurable expiration
+- **Token Refresh**: Automatic OAuth token renewal
+
+## Claude AI Integration
+
+### Webhook Processing
+
+1. GitLab sends webhook to `/webhook/:projectId`
+2. Server validates webhook signature and processes event
+3. Claude handler analyzes event context (issue, MR, comment)
+4. If `@claude` mentioned, generates AI response
+5. Response posted back to GitLab via API
+
+### Configuration Options
+
+Per-project settings available in React dashboard:
+
+- **Trigger Phrase**: Customize mention trigger (default: `@claude`)
+- **System Prompt**: Project-specific AI instructions
+- **Auto-reply**: Enable/disable automatic responses
+- **Code Context**: Include relevant code files in AI context
+- **Max Context Files**: Limit number of files for context
+
+## Deployment
+
+### Docker Deployment
+
+```bash
+# Basic deployment
+docker-compose up -d
+
+# With Cloudflare Tunnel
+docker-compose --profile tunnel up -d
+
+# With Redis and monitoring
+docker-compose --profile full up -d
+```
+
+### Environment Configuration
+
+Required environment variables:
+
+```bash
+# GitLab OAuth
+GITLAB_APP_ID=your_gitlab_app_id
+GITLAB_APP_SECRET=your_gitlab_app_secret
+GITLAB_URL=https://gitlab.com  # or your GitLab instance
+
+# Claude AI (choose one)
+ANTHROPIC_API_KEY=your_anthropic_key
+CLAUDE_CODE_OAUTH_TOKEN=your_claude_oauth_token
+
+# Security
+SESSION_SECRET=random_secure_string
+ENCRYPTION_KEY=random_32_byte_key
+
+# Optional: Cloudflare Tunnel
+CLOUDFLARE_TUNNEL_TOKEN=your_tunnel_token
+```
+
+### Production Considerations
+
+- **Reverse Proxy**: Use Nginx or Cloudflare Tunnel for SSL termination
+- **Session Storage**: Consider Redis for multi-instance deployments
+- **Monitoring**: Optional Prometheus/Grafana stack included
+- **Backups**: Backup `./data` directory for user configurations
+- **Updates**: Use GitHub Container Registry images for updates
 
 ## Important Implementation Notes
 
-- Runs TypeScript directly with Bun (no build step)
-- All commits are automatically signed
-- OIDC authentication used for cloud providers (Bedrock/Vertex)
-- Supports CI/CD log access with proper permissions
-- The action creates a single comment that it updates with progress checkboxes
-- Branch names follow patterns: `claude/issue-{number}` or `claude/pr-{number}-{timestamp}`
-- All GitHub API calls use Octokit clients with proper error handling
-- The action supports multiple Claude providers (Anthropic API, AWS Bedrock, Google Vertex AI)
+- **Hybrid Architecture**: Server-side OAuth with client-side React SPA
+- **No Database**: Uses encrypted JSON files for simplicity and portability  
+- **Multi-Project**: Single installation supports unlimited GitLab projects
+- **Real-time**: Webhook-based responses for immediate AI assistance
+- **Responsive**: React frontend works on desktop and mobile devices
+- **Docker-First**: Designed for containerized deployment with Docker Compose
