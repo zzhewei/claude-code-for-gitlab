@@ -481,8 +481,14 @@ function substitutePromptVariables(
         : "",
     PR_TITLE: eventData.isPR && contextData?.title ? contextData.title : "",
     ISSUE_TITLE: !eventData.isPR && contextData?.title ? contextData.title : "",
-    PR_BODY: eventData.isPR && contextData?.body ? contextData.body : "",
-    ISSUE_BODY: !eventData.isPR && contextData?.body ? contextData.body : "",
+    PR_BODY:
+      eventData.isPR && contextData?.body
+        ? formatBody(contextData.body, githubData.imageUrlMap)
+        : "",
+    ISSUE_BODY:
+      !eventData.isPR && contextData?.body
+        ? formatBody(contextData.body, githubData.imageUrlMap)
+        : "",
     PR_COMMENTS: eventData.isPR
       ? formatComments(comments, githubData.imageUrlMap)
       : "",
