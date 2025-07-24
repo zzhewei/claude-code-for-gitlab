@@ -11,7 +11,7 @@ This is a **GitLab OAuth Application** that integrates Claude AI directly into G
 ### Technology Stack
 
 - **Backend**: Node.js + Express.js + TypeScript
-- **Frontend**: React 18 + Vite + TypeScript  
+- **Frontend**: React 18 + Vite + TypeScript
 - **Package Manager**: Bun (for dependency management)
 - **Runtime**: Node.js (for production deployment)
 - **Storage**: Encrypted JSON files (no database required)
@@ -118,7 +118,7 @@ bun run start                 # Start production server
 ### Data Encryption
 
 - **User tokens**: AES-256-GCM encryption for OAuth tokens
-- **Session data**: Express-session with configurable secrets  
+- **Session data**: Express-session with configurable secrets
 - **Storage**: JSON files with encrypted sensitive fields
 
 ### Security Features
@@ -196,7 +196,7 @@ CLOUDFLARE_TUNNEL_TOKEN=your_tunnel_token
 ## Important Implementation Notes
 
 - **Hybrid Architecture**: Server-side OAuth with client-side React SPA
-- **No Database**: Uses encrypted JSON files for simplicity and portability  
+- **No Database**: Uses encrypted JSON files for simplicity and portability
 - **Multi-Project**: Single installation supports unlimited GitLab projects
 - **Real-time**: Webhook-based responses for immediate AI assistance
 - **Responsive**: React frontend works on desktop and mobile devices

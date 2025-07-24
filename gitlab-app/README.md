@@ -27,11 +27,13 @@ docker run -d \
 ### Using Docker Compose
 
 1. Copy `.env.example` to `.env` and configure:
+
    ```bash
    cp .env.example .env
    ```
 
 2. Edit `.env` with your GitLab personal access token:
+
    ```env
    GITLAB_TOKEN=glpat-xxxxxxxxxxxxxxxxxxxx
    WEBHOOK_SECRET=your-webhook-secret-here
@@ -40,11 +42,13 @@ docker run -d \
 3. Choose your deployment method:
 
    **Option A: Simple deployment (with local Redis)**
+
    ```bash
    docker-compose -f docker-compose.simple.yml up -d
    ```
 
    **Option B: With Cloudflare Tunnel (no port exposure needed)**
+
    ```bash
    # Add your Cloudflare tunnel token to .env:
    # CLOUDFLARE_TUNNEL_TOKEN=your-tunnel-token-here
@@ -54,6 +58,7 @@ docker run -d \
 ## GitLab Setup
 
 1. In your GitLab instance or group:
+
    - Go to **Settings > Webhooks**
    - Add webhook URL: `https://your-server.com/webhook`
    - Secret token: Use the same value as `WEBHOOK_SECRET` in `.env`
@@ -61,6 +66,7 @@ docker run -d \
    - Save webhook
 
 2. In your project's `.gitlab-ci.yml`, add a job that runs when triggered:
+
    ```yaml
    workflow:
      rules:
@@ -70,7 +76,7 @@ docker run -d \
      stage: claude
      script:
        - echo "Triggered by @claude"
-       - # Your Claude integration here
+       -  # Your Claude integration here
      interruptible: true
      timeout: 10m
    ```
