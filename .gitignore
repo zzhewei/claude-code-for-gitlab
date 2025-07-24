@@ -3,3 +3,7 @@ node_modules
 
 **/.claude/settings.local.json
 logs/
+
+# TypeScript build cache
+*.tsbuildinfo
+.tsbuildinfo

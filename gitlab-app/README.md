@@ -37,9 +37,18 @@ docker run -d \
    WEBHOOK_SECRET=your-webhook-secret-here
    ```
 
-3. Run with Docker Compose:
+3. Choose your deployment method:
+
+   **Option A: Simple deployment (with local Redis)**
    ```bash
    docker-compose -f docker-compose.simple.yml up -d
+   ```
+
+   **Option B: With Cloudflare Tunnel (no port exposure needed)**
+   ```bash
+   # Add your Cloudflare tunnel token to .env:
+   # CLOUDFLARE_TUNNEL_TOKEN=your-tunnel-token-here
+   docker-compose up -d
    ```
 
 ## GitLab Setup
