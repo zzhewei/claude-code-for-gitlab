@@ -28,11 +28,10 @@ export async function triggerPipeline(
         }))
       : undefined;
 
-    const pipeline = await gitlab.Pipelines.create(
-      projectId,
-      ref,
-      pipelineVariables ? { variables: pipelineVariables } : undefined,
-    );
+    // For Gitbeaker, pass variables directly in the options object
+    const options = pipelineVariables ? { variables: pipelineVariables } : {};
+
+    const pipeline = await gitlab.Pipelines.create(projectId, ref, options);
 
     logger.info("Pipeline created successfully", { pipelineId: pipeline.id });
     return pipeline.id;
