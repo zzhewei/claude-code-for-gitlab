@@ -15,6 +15,8 @@ A lightweight webhook server that listens for `@claude` mentions in GitLab issue
 
 ### Using Pre-built Docker Image
 
+> **Note:** The Docker image needs to be made public first. Go to the [package settings](https://github.com/RealMikeChong/claude-code-for-gitlab/pkgs/container/claude-code-gitlab-app) and change the visibility to "Public".
+
 ```bash
 docker run -d \
   --name gitlab-claude-webhook \
@@ -22,6 +24,27 @@ docker run -d \
   -e GITLAB_TOKEN=glpat-xxxxxxxxxxxxxxxxxxxx \
   -e WEBHOOK_SECRET=your-webhook-secret-here \
   ghcr.io/realmikechong/claude-code-gitlab-app:latest
+```
+
+### Building from Source
+
+If the pre-built image is not accessible, you can build it locally:
+
+```bash
+# Clone the repository
+git clone https://github.com/RealMikeChong/claude-code-for-gitlab.git
+cd claude-code-for-gitlab/gitlab-app
+
+# Build the Docker image
+docker build -t gitlab-claude-webhook .
+
+# Run the locally built image
+docker run -d \
+  --name gitlab-claude-webhook \
+  -p 3000:3000 \
+  -e GITLAB_TOKEN=glpat-xxxxxxxxxxxxxxxxxxxx \
+  -e WEBHOOK_SECRET=your-webhook-secret-here \
+  gitlab-claude-webhook
 ```
 
 ### Using Docker Compose
