@@ -1,58 +1,82 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Development Tools
+## Repository Overview
 
-- Runtime: Bun 1.2.11
+This repository contains the **claude-code-action** project - a GitHub Action for integrating Claude AI with GitHub repositories and pull requests.
 
-## Common Development Tasks
+## Common Development Commands
 
-### Available npm/bun scripts from package.json:
-
+### Setup and Installation
 ```bash
-# Test
+# Install dependencies
+bun install
+
+# Install git pre-push hooks
+bun run install-hooks
+```
+
+### Core Development Tasks
+```bash
+# Run tests
 bun test
 
-# Formatting
-bun run format          # Format code with prettier
-bun run format:check    # Check code formatting
+# Type checking
+bun run typecheck
+
+# Format code
+bun run format
+
+# Check formatting (no changes)
+bun run format:check
 ```
 
-## Architecture Overview
+### Development Workflow
+After making changes, the pre-push hook automatically runs:
+1. Format check (auto-formats if needed)
+2. TypeScript type checking  
+3. Test suite
 
-This is a GitHub Action that enables Claude to interact with GitHub PRs and issues. The action:
+To run these checks manually before pushing:
+```bash
+bun run format:check && bun run typecheck && bun test
+```
 
-1. **Trigger Detection**: Uses `check-trigger.ts` to determine if Claude should respond based on comment/issue content
-2. **Context Gathering**: Fetches GitHub data (PRs, issues, comments) via `github-data-fetcher.ts` and formats it using `github-data-formatter.ts`
-3. **AI Integration**: Supports multiple Claude providers (Anthropic API, AWS Bedrock, Google Vertex AI)
-4. **Prompt Creation**: Generates context-rich prompts using `create-prompt.ts`
-5. **MCP Server Integration**: Installs and configures GitHub MCP server for extended functionality
+## Architecture
 
-### Key Components
-
-- **Trigger System**: Responds to `/claude` comments or issue assignments
-- **Authentication**: OIDC-based token exchange for secure GitHub interactions
-- **Cloud Integration**: Supports direct Anthropic API, AWS Bedrock, and Google Vertex AI
-- **GitHub Operations**: Creates branches, posts comments, and manages PRs/issues
+### Technology Stack
+- **Runtime**: Bun (v1.2.11+)
+- **Language**: TypeScript (strict mode)
+- **Key Libraries**:
+  - @modelcontextprotocol/sdk (MCP support)
+  - @octokit/* (GitHub API)
+  - zod (schema validation)
 
 ### Project Structure
-
 ```
-src/
-├── check-trigger.ts        # Determines if Claude should respond
-├── create-prompt.ts        # Generates contextual prompts
-├── github-data-fetcher.ts  # Retrieves GitHub data
-├── github-data-formatter.ts # Formats GitHub data for prompts
-├── install-mcp-server.ts  # Sets up GitHub MCP server
-├── update-comment-with-link.ts # Updates comments with job links
-└── types/
-    └── github.ts          # TypeScript types for GitHub data
+├── src/
+│   ├── entrypoints/      # Main entry points
+│   ├── github/           # GitHub-specific logic
+│   ├── providers/        # AI provider abstraction
+│   ├── mcp/             # MCP server integration
+│   ├── create-prompt/    # Prompt generation
+│   └── utils/           # Shared utilities
+├── test/                # Test files
+├── examples/            # Example workflows
+└── action.yml          # GitHub Action metadata
 ```
 
-## Important Notes
+### Key Components
+- **Trigger Detection**: Responds to comments with trigger phrase (default: `@claude`)
+- **Context Gathering**: Fetches PR data and formats for AI processing
+- **Provider Support**: Direct Anthropic API, AWS Bedrock, Google Vertex AI
+- **MCP Integration**: Extensible tool support via Model Context Protocol
+- **Progress Tracking**: Dynamic comment updates with checkboxes
 
-- Actions are triggered by `@claude` comments or issue assignment unless a different trigger_phrase is specified
-- The action creates branches for issues and pushes to PR branches directly
-- All actions create OIDC tokens for secure authentication
-- Progress is tracked through dynamic comment updates with checkboxes
+## Important Implementation Notes
+
+- Runs TypeScript directly with Bun (no build step)
+- All commits are automatically signed
+- OIDC authentication used for cloud providers (Bedrock/Vertex)
+- Supports CI/CD log access with proper permissions
