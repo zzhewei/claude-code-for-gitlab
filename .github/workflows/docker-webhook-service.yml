@@ -21,11 +21,11 @@ on:
 
 env:
   # Docker Hub
-  DOCKER_HUB_REPOSITORY: imWildCat/claude-code-gitlab-webhook
+  DOCKER_HUB_REPOSITORY: realmikechong/claude-code-gitlab-webhook
   # GitHub Container Registry
-  GHCR_REPOSITORY: ghcr.io/RealMikeChong/claude-code-gitlab-webhook
+  GHCR_REPOSITORY: ghcr.io/realmikechong/claude-code-gitlab-webhook
   # GitLab Container Registry (optional)
-  GITLAB_REGISTRY: registry.gitlab.com/imWildCat/claude-code-gitlab-webhook
+  GITLAB_REGISTRY: registry.gitlab.com/realmikechong/claude-code-gitlab-webhook
 
 jobs:
   build-and-push:

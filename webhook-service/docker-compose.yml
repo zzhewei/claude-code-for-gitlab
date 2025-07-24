@@ -6,7 +6,7 @@ services:
       args:
         - BUILD_DATE=${BUILD_DATE:-$(date -u +"%Y-%m-%dT%H:%M:%SZ")}
         - VCS_REF=${VCS_REF:-$(git rev-parse --short HEAD)}
-    image: imWildCat/claude-code-gitlab-webhook:${VERSION:-latest}
+    image: realmikechong/claude-code-gitlab-webhook:${VERSION:-latest}
     container_name: claude-webhook-service
     restart: unless-stopped
     ports:

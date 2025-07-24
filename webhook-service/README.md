@@ -50,14 +50,14 @@ docker-compose --profile full up -d
 
 ```bash
 # Pull from Docker Hub
-docker pull imWildCat/claude-code-gitlab-webhook:latest
+docker pull realmikechong/claude-code-gitlab-webhook:latest
 
 # Or from GitHub Container Registry
 docker pull ghcr.io/RealMikeChong/claude-code-gitlab-webhook:latest
 
 # Run with environment file
 docker run -d --env-file .env -p 3000:3000 \
-  imWildCat/claude-code-gitlab-webhook:latest
+  realmikechong/claude-code-gitlab-webhook:latest
 ```
 
 ## 📋 Setup Requirements
