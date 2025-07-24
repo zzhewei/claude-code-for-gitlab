@@ -80,7 +80,7 @@ export async function cancelOldPipelines(
       ),
     );
   } catch (error) {
-    logger.error("Error cancelling old pipelines:", error);
+    logger.error("Error cancelling old pipelines:", { error: error instanceof Error ? error.message : error });
     // Don't throw - this is not critical
   }
 }
