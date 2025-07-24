@@ -54,7 +54,9 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || true,
+  origin: process.env.NODE_ENV === 'development' 
+    ? ['http://localhost:5173', 'http://localhost:3000']
+    : (process.env.ALLOWED_ORIGINS?.split(',') || [config.appUrl]),
   credentials: true,
 }));
 
@@ -74,12 +76,10 @@ app.use(session({
   },
 }));
 
-// View engine
-app.set('view engine', 'ejs');
-app.set('views', join(__dirname, '../views'));
-
-// Static files
-app.use('/static', express.static(join(__dirname, '../public')));
+// Static files - serve React build in production
+if (process.env.NODE_ENV === 'production') {
+  app.use('/app', express.static(join(__dirname, '../client/dist')));
+}
 
 // Routes
 app.use('/auth', authRoutes);
@@ -87,13 +87,9 @@ app.use('/api', apiRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/webhook', webhookRoutes);
 
-// Home page
+// Redirect root to React app
 app.get('/', (req: Request, res: Response) => {
-  res.render('index', { 
-    user: req.session.user,
-    appUrl: config.appUrl,
-    gitlabUrl: config.gitlabUrl,
-  });
+  res.redirect('/app');
 });
 
 // Health check
@@ -109,10 +105,27 @@ app.get('/health', (_req: Request, res: Response) => {
   });
 });
 
+// Serve React app (SPA catch-all route)
+app.get('/app/*', (req: Request, res: Response) => {
+  if (process.env.NODE_ENV === 'production') {
+    res.sendFile(join(__dirname, '../client/dist/index.html'));
+  } else {
+    // In development, redirect to Vite dev server
+    res.redirect(`http://localhost:5173${req.path}`);
+  }
+});
+
 // Error handling
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   logger.error('Error:', err);
-  res.status(500).render('error', { error: err.message });
+  
+  // For API routes, return JSON error
+  if (_req.path.startsWith('/api/') || _req.path.startsWith('/auth/') || _req.path.startsWith('/webhook/')) {
+    return res.status(500).json({ error: err.message });
+  }
+  
+  // For app routes, redirect to React app which will handle error display
+  res.redirect('/app/error');
 });
 
 // Start server

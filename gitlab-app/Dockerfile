@@ -1,13 +1,18 @@
-# Use Bun for dependency installation
+# Dependencies stage - install all dependencies
 FROM oven/bun:1-alpine AS dependencies
 
 WORKDIR /app
 
-# Copy package files
+# Copy all package files
 COPY package.json bun.lockb* ./
+COPY client/package.json ./client/
 
-# Install dependencies with Bun
-RUN bun install --frozen-lockfile --production
+# Install root dependencies
+RUN bun install --frozen-lockfile
+
+# Install client dependencies  
+WORKDIR /app/client
+RUN bun install --frozen-lockfile
 
 # Build stage
 FROM oven/bun:1-alpine AS build
@@ -16,9 +21,10 @@ WORKDIR /app
 
 # Copy source code and dependencies
 COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=dependencies /app/client/node_modules ./client/node_modules
 COPY . .
 
-# Build TypeScript
+# Build both server and client
 RUN bun run build
 
 # Production stage - using Node.js runtime
@@ -35,9 +41,9 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy built application and dependencies from previous stages
-COPY --from=build /app/dist ./dist
+COPY --from=build /app/server/dist ./server/dist
+COPY --from=build /app/client/dist ./client/dist
 COPY --from=dependencies /app/node_modules ./node_modules
-COPY --from=build /app/views ./views
 COPY --from=build /app/package.json ./
 
 # Create necessary directories
@@ -58,4 +64,4 @@ EXPOSE 3000
 ENTRYPOINT ["dumb-init", "--"]
 
 # Start the application
-CMD ["node", "dist/server.js"]
+CMD ["node", "server/dist/server.js"]

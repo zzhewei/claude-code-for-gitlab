@@ -36,14 +36,14 @@ router.get('/callback', async (req: Request, res: Response) => {
   // Verify state
   if (state !== req.session.oauthState) {
     logger.error('Invalid OAuth state');
-    return res.status(400).render('error', { error: 'Invalid OAuth state' });
+    return res.redirect('/app/error?message=Invalid OAuth state');
   }
   
   delete req.session.oauthState;
   
   if (!code || typeof code !== 'string') {
     logger.error('No authorization code received');
-    return res.status(400).render('error', { error: 'No authorization code received' });
+    return res.redirect('/app/error?message=No authorization code received');
   }
   
   try {
@@ -103,11 +103,11 @@ router.get('/callback', async (req: Request, res: Response) => {
     };
     
     logger.info(`User ${gitlabUser.username} logged in successfully`);
-    res.redirect('/dashboard');
+    res.redirect('/app');
     
   } catch (error) {
     logger.error('OAuth callback error:', error);
-    res.status(500).render('error', { error: 'Failed to authenticate with GitLab' });
+    res.redirect('/app/error?message=Failed to authenticate with GitLab');
   }
 });
 
@@ -120,7 +120,7 @@ router.get('/logout', (req: Request, res: Response) => {
     } else {
       logger.info(`User ${username} logged out`);
     }
-    res.redirect('/');
+    res.redirect('/app/login');
   });
 });
 
@@ -166,6 +166,18 @@ router.post('/refresh', async (req: Request, res: Response) => {
     logger.error('Token refresh error:', error);
     res.status(500).json({ error: 'Failed to refresh token' });
   }
+});
+
+// Get current user endpoint for React app
+router.get('/me', (req: Request, res: Response) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  
+  res.json({
+    user: req.session.user,
+    authenticated: true,
+  });
 });
 
 export default router;
