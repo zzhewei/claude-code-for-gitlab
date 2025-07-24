@@ -13,6 +13,7 @@ A general-purpose [Claude Code](https://claude.ai/code) action for GitHub PRs an
 - 🛠️ **Flexible Tool Access**: Access to GitHub APIs and file operations (additional tools can be enabled via configuration)
 - 📋 **Progress Tracking**: Visual progress indicators with checkboxes that dynamically update as Claude completes tasks
 - 🏃 **Runs on Your Infrastructure**: The action executes entirely on your own GitHub runner (Anthropic API calls go to your chosen provider)
+- 🦊 **GitLab Support**: Full support for GitLab CI/CD and self-hosted instances (see [GitLab Setup Guide](./docs/GITLAB_APP_SETUP.md))
 
 ## Quickstart
 

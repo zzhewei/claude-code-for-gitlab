@@ -241,7 +241,13 @@ runs:
       if: steps.prepare.outputs.contains_trigger == 'true' && steps.prepare.outputs.claude_comment_id && always()
       shell: bash
       run: |
-        bun run ${GITHUB_ACTION_PATH}/src/entrypoints/update-comment-link.ts
+        if [ "${{ steps.prepare.outputs.platform }}" = "gitlab" ]; then
+          echo "Updating GitLab merge request note..."
+          bun run ${GITHUB_ACTION_PATH}/src/entrypoints/update-comment-gitlab.ts
+        else
+          echo "Updating GitHub comment..."
+          bun run ${GITHUB_ACTION_PATH}/src/entrypoints/update-comment-link.ts
+        fi
       env:
         REPOSITORY: ${{ github.repository }}
         PR_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
@@ -265,17 +271,29 @@ runs:
       if: steps.prepare.outputs.contains_trigger == 'true' && steps.claude-code.outputs.execution_file != ''
       shell: bash
       run: |
-        # Try to format the turns, but if it fails, dump the raw JSON
-        if bun run ${{ github.action_path }}/src/entrypoints/format-turns.ts "${{ steps.claude-code.outputs.execution_file }}" >> $GITHUB_STEP_SUMMARY 2>/dev/null; then
-          echo "Successfully formatted Claude Code report"
+        if [ "${{ steps.prepare.outputs.platform }}" = "gitlab" ]; then
+          # For GitLab, output to console log instead of GITHUB_STEP_SUMMARY
+          echo "## Claude Code Report"
+          if bun run ${{ github.action_path }}/src/entrypoints/format-turns.ts "${{ steps.claude-code.outputs.execution_file }}" 2>/dev/null; then
+            echo "Successfully formatted Claude Code report"
+          else
+            echo "## Claude Code Report (Raw Output)"
+            cat "${{ steps.claude-code.outputs.execution_file }}"
+          fi
         else
-          echo "## Claude Code Report (Raw Output)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Failed to format output (please report). Here's the raw JSON:" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```json' >> $GITHUB_STEP_SUMMARY
-          cat "${{ steps.claude-code.outputs.execution_file }}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          # For GitHub, use GITHUB_STEP_SUMMARY
+          # Try to format the turns, but if it fails, dump the raw JSON
+          if bun run ${{ github.action_path }}/src/entrypoints/format-turns.ts "${{ steps.claude-code.outputs.execution_file }}" >> $GITHUB_STEP_SUMMARY 2>/dev/null; then
+            echo "Successfully formatted Claude Code report"
+          else
+            echo "## Claude Code Report (Raw Output)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Failed to format output (please report). Here's the raw JSON:" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat "${{ steps.claude-code.outputs.execution_file }}" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
         fi
 
     - name: Revoke app token
