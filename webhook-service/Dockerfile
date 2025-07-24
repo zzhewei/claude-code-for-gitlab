@@ -1,17 +1,15 @@
 # Multi-stage build for smaller production image
-FROM node:22-slim AS builder
-
-# Install build dependencies
-RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
+# Use Bun for dependency installation
+FROM oven/bun:1-alpine AS dependencies
 
 # Create app directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package files and lock file
+COPY package.json bun.lockb* ./
 
-# Install all dependencies (including dev) for potential build steps
-RUN npm ci && npm cache clean --force
+# Install all dependencies using Bun (faster than npm)
+RUN bun install --frozen-lockfile
 
 # Copy source code
 COPY src/ ./src/
@@ -20,9 +18,9 @@ COPY src/ ./src/
 COPY test* ./test/
 
 # Run tests in build stage if test directory exists
-RUN if [ -d "./test" ]; then npm test || true; fi
+RUN if [ -d "./test" ]; then bun test || true; fi
 
-# Production stage
+# Production stage - using Node.js runtime
 FROM node:22-slim
 
 # Install production dependencies and security updates
@@ -37,15 +35,13 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json ./
 
-# Install only production dependencies
-RUN npm ci --only=production && \
-    npm cache clean --force && \
-    npm audit fix --audit-level=moderate || true
+# Copy node_modules from Bun stage (already installed)
+COPY --from=dependencies /app/node_modules ./node_modules
 
 # Copy source code from builder
-COPY --from=builder /app/src ./src/
+COPY --from=dependencies /app/src ./src/
 
 # Create necessary directories
 RUN mkdir -p logs config
@@ -60,11 +56,11 @@ RUN chown -R claude:nodejs /app && \
     chmod -R 777 /app/logs
 
 # Add labels for metadata
-LABEL maintainer="imWildCat Inc" \
+LABEL maintainer="RealMikeChong" \
       version="1.0.0" \
       description="Claude Code GitLab Webhook Service" \
       org.opencontainers.image.source="https://github.com/RealMikeChong/claude-code-for-gitlab" \
-      org.opencontainers.image.vendor="imWildCat Inc" \
+      org.opencontainers.image.vendor="RealMikeChong" \
       org.opencontainers.image.title="Claude Code GitLab Webhook" \
       org.opencontainers.image.description="Webhook receiver service for Claude Code GitLab integration"
 
@@ -81,5 +77,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # Use tini for proper signal handling
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
-# Start the application
+# Start the application with Node.js
 CMD ["node", "src/server.js"]
