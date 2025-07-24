@@ -1,10 +1,11 @@
-# GitLab CI/CD Configuration using Webhook Triggers for Issue Comments
-# This approach is specifically for triggering Claude Code on issue comment events,
-# which don't have native CI/CD triggers in GitLab.
+# GitLab CI/CD Configuration for Claude Code Webhook Server Integration
+# This configuration works with the webhook server from gitlab-app/
 #
-# NOTE: For merge request events, use the standard `rules` syntax with
-# `if: '$CI_PIPELINE_SOURCE == "merge_request_event"'` instead of webhooks.
-# See basic-setup.gitlab-ci.yml for the recommended approach.
+# The webhook server listens for GitLab Note Hook events and triggers
+# pipelines when @claude is mentioned in issues or merge requests.
+#
+# IMPORTANT: This requires deploying the webhook server first.
+# See gitlab-app/README.md for deployment instructions.
 
 # Define the Claude Code job that will be triggered by webhooks
 claude_webhook_handler:
@@ -32,9 +33,9 @@ claude_webhook_handler:
 
     # Run Claude Code action from cloned repository
     - cd /tmp/claude-code && bun run src/entrypoints/prepare.ts
-  only:
-    # Only run when triggered by webhook
-    - triggers
+  rules:
+    # Only run when triggered by webhook with CLAUDE_TRIGGER variable
+    - if: '$CLAUDE_TRIGGER == "true"'
   variables:
     # Authentication - Claude Code OAuth Token (recommended)
     CLAUDE_CODE_OAUTH_TOKEN: $CLAUDE_CODE_OAUTH_TOKEN
@@ -50,26 +51,22 @@ claude_webhook_handler:
     # The webhook payload is passed as GITLAB_WEBHOOK_PAYLOAD
     # This is automatically set when using GitLab webhooks
 
-# Webhook configuration for different event types
-# Add these webhooks in GitLab project settings:
-
-# 1. Merge Request Events Webhook
-# URL: https://gitlab.com/api/v4/projects/PROJECT_ID/trigger/pipeline
-# Token: Create a pipeline trigger token in CI/CD settings
-# Events: Merge request events, Comments
+# Webhook configuration for Claude Code GitLab webhook server
+# This configuration works with the webhook server from gitlab-app/
 #
-# Add these variables to the webhook:
-# - variables[GITLAB_EVENT_TYPE]=merge_request
-# - variables[TRIGGER_TOKEN]=your-trigger-token
-
-# 2. Issue Events Webhook
-# URL: https://gitlab.com/api/v4/projects/PROJECT_ID/trigger/pipeline
-# Token: Same pipeline trigger token
-# Events: Issues events, Comments on issues
+# The webhook server automatically triggers pipelines when @claude is mentioned
+# and sets the CLAUDE_TRIGGER=true variable along with other context variables:
+# - CLAUDE_PROJECT_PATH: The project path (e.g., owner/repo)
+# - CLAUDE_RESOURCE_TYPE: Either "issue" or "merge_request"
+# - CLAUDE_RESOURCE_ID: The issue/MR IID
+# - CLAUDE_BRANCH: The branch to work on
+# - CLAUDE_AUTHOR: The user who mentioned @claude
+# - CLAUDE_NOTE: The comment text
 #
-# Add these variables to the webhook:
-# - variables[GITLAB_EVENT_TYPE]=issue
-# - variables[TRIGGER_TOKEN]=your-trigger-token
+# To use this configuration:
+# 1. Deploy the webhook server from gitlab-app/
+# 2. Configure GitLab webhook to point to your webhook server URL
+# 3. The webhook server will trigger this pipeline with proper variables
 
 # Example job for testing webhook integration
 test_webhook:
@@ -79,47 +76,31 @@ test_webhook:
     - echo "Webhook payload:"
     - echo "$GITLAB_WEBHOOK_PAYLOAD" | base64 -d | head -n 20
     - echo "Event type: $GITLAB_EVENT_TYPE"
-  only:
-    - triggers
-  when: manual
+  rules:
+    - if: '$CLAUDE_TRIGGER == "true"'
+      when: manual
 
-# Job to set up webhooks automatically (run once)
-setup_webhooks:
+# Job to verify webhook server configuration
+verify_webhook_config:
   image: alpine:latest
   stage: .pre
   before_script:
     - apk add --no-cache curl jq
   script:
-    - |
-      # Create pipeline trigger if it doesn't exist
-      TRIGGER_RESPONSE=$(curl -s --request POST \
-        --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
-        --form "description=Claude Code Webhook Trigger" \
-        "$CI_API_V4_URL/projects/$CI_PROJECT_ID/triggers")
-
-      TRIGGER_TOKEN=$(echo $TRIGGER_RESPONSE | jq -r '.token')
-      echo "Pipeline trigger token: $TRIGGER_TOKEN"
-      echo "Save this token in your webhook configuration!"
-
-      # Create merge request webhook
-      curl --request POST \
-        --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
-        --header "Content-Type: application/json" \
-        --data '{
-          "url": "'$CI_API_V4_URL'/projects/'$CI_PROJECT_ID'/trigger/pipeline",
-          "merge_requests_events": true,
-          "note_events": true,
-          "enable_ssl_verification": true,
-          "token": "'$TRIGGER_TOKEN'",
-          "push_events": false,
-          "issues_events": false,
-          "job_events": false,
-          "pipeline_events": false,
-          "wiki_page_events": false
-        }' \
-        "$CI_API_V4_URL/projects/$CI_PROJECT_ID/hooks"
-
-      echo "Webhooks configured successfully!"
-  when: manual
-  only:
-    - main
+    - echo "Verifying Claude webhook server configuration..."
+    - echo "Required variables for webhook server:"
+    - echo "- GITLAB_TOKEN or CLAUDE_GITLAB_TOKEN: GitLab Personal Access Token"
+    - echo "- ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN: Claude API credentials"
+    - echo ""
+    - echo "Webhook server should be configured to:"
+    - echo "1. Listen for GitLab webhooks on Note Hook events"
+    - echo "2. Trigger pipelines when @claude is mentioned"
+    - echo "3. Pass CLAUDE_TRIGGER=true and context variables"
+    - echo ""
+    - echo "Current CI variables:"
+    - echo "- CI_PROJECT_ID: $CI_PROJECT_ID"
+    - echo "- CI_PROJECT_PATH: $CI_PROJECT_PATH"
+    - echo "- CI_API_V4_URL: $CI_API_V4_URL"
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      when: manual
