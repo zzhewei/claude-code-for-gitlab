@@ -7,7 +7,7 @@ services:
       args:
         - BUILD_DATE=${BUILD_DATE:-$(date -u +"%Y-%m-%dT%H:%M:%SZ")}
         - VCS_REF=${VCS_REF:-$(git rev-parse --short HEAD)}
-    image: realmikechong/claude-gitlab-app:${VERSION:-latest}
+    image: ghcr.io/realmikechong/claude-code-for-gitlab:${VERSION:-latest}
     container_name: claude-gitlab-app
     restart: unless-stopped
     ports:
