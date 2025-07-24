@@ -19,22 +19,78 @@ export async function triggerPipeline(
       variables: logger.maskSensitive(variables),
     });
 
-    // Transform variables to the format Gitbeaker expects
+    // Use fetch directly for better error handling
+    const gitlabUrl = process.env.GITLAB_URL || "https://gitlab.com";
+    const token = process.env.GITLAB_TOKEN!;
+
+    // Transform variables to GitLab API format
     const pipelineVariables = variables
-      ? Object.entries(variables).map(([key, value]) => ({
-          key,
-          value,
-          variable_type: "env_var" as const,
-        }))
-      : undefined;
+      ? Object.entries(variables).map(([key, value]) => ({ key, value }))
+      : [];
 
-    // For Gitbeaker, pass variables directly in the options object
-    const options = pipelineVariables ? { variables: pipelineVariables } : {};
+    const requestBody = {
+      ref,
+      variables: pipelineVariables,
+    };
 
-    const pipeline = await gitlab.Pipelines.create(projectId, ref, options);
+    logger.debug("Pipeline request body", {
+      url: `${gitlabUrl}/api/v4/projects/${projectId}/pipeline`,
+      body: {
+        ...requestBody,
+        variables: logger.maskSensitive(pipelineVariables),
+      },
+    });
 
-    logger.info("Pipeline created successfully", { pipelineId: pipeline.id });
-    return pipeline.id;
+    const response = await fetch(
+      `${gitlabUrl}/api/v4/projects/${projectId}/pipeline`,
+      {
+        method: "POST",
+        headers: {
+          "PRIVATE-TOKEN": token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      },
+    );
+
+    const responseText = await response.text();
+    let responseData;
+
+    try {
+      responseData = JSON.parse(responseText);
+    } catch (e) {
+      logger.error("Failed to parse pipeline response", {
+        status: response.status,
+        statusText: response.statusText,
+        responseText,
+      });
+      throw new Error(
+        `Pipeline API returned invalid JSON: ${response.statusText}`,
+      );
+    }
+
+    if (!response.ok) {
+      logger.error("Pipeline creation failed", {
+        status: response.status,
+        statusText: response.statusText,
+        responseBody: responseData,
+        projectId,
+        ref,
+      });
+      throw new Error(
+        responseData.message ||
+          responseData.error ||
+          `Pipeline creation failed: ${response.statusText}`,
+      );
+    }
+
+    logger.info("Pipeline created successfully", {
+      pipelineId: responseData.id,
+      webUrl: responseData.web_url,
+      status: responseData.status,
+    });
+
+    return responseData.id;
   } catch (error) {
     logger.error("Failed to create pipeline", {
       error: error instanceof Error ? error.message : error,
