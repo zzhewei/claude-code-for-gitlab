@@ -166,7 +166,7 @@ The GitLab token needs the following scopes:
 ### Optional Configuration
 
 - `CLAUDE_TRIGGER_PHRASE` - Custom trigger phrase (default: `@claude`)
-- `CLAUDE_MODEL` - Model to use (default: `claude-3-5-sonnet-latest`)
+- `CLAUDE_MODEL` - Model to use (default: `sonnet`)
 - `CLAUDE_BRANCH_PREFIX` - Prefix for branches created by Claude
 - `BASE_BRANCH` - Base branch for comparisons (default: `main`)
 - `CLAUDE_INSTRUCTIONS` - Custom instructions for Claude

@@ -26,7 +26,7 @@ ANTHROPIC_API_KEY: your-anthropic-api-key
 CLAUDE_CODE_OAUTH_TOKEN: your-claude-oauth-token
 
 # Optional
-CLAUDE_MODEL: claude-3-5-sonnet-latest # Or another model
+CLAUDE_MODEL: sonnet # Or another model
 CLAUDE_INSTRUCTIONS: |
   Custom instructions for Claude...
 ```

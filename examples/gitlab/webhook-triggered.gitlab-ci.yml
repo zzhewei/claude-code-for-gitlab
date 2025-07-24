@@ -45,7 +45,7 @@ claude_webhook_handler:
 
     # Claude configuration
     CLAUDE_TRIGGER_PHRASE: "@claude"
-    CLAUDE_MODEL: "claude-3-5-sonnet-latest"
+    CLAUDE_MODEL: "sonnet"
 
     # The webhook payload is passed as GITLAB_WEBHOOK_PAYLOAD
     # This is automatically set when using GitLab webhooks

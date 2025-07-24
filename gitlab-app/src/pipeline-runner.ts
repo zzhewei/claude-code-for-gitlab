@@ -41,7 +41,7 @@ async function runClaudeCode(prompt: string) {
       "npx",
       "@anthropic/claude-code@latest",
       "--model",
-      process.env.CLAUDE_MODEL || "claude-3-5-sonnet-latest",
+      process.env.CLAUDE_MODEL || "sonnet",
       "--prompt",
       prompt,
     ];
