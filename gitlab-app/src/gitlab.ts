@@ -13,10 +13,14 @@ export async function triggerPipeline(
   variables?: Record<string, string>,
 ): Promise<number> {
   try {
-    logger.debug("Creating pipeline", { projectId, ref, variables: logger.maskSensitive(variables) });
-    
+    logger.debug("Creating pipeline", {
+      projectId,
+      ref,
+      variables: logger.maskSensitive(variables),
+    });
+
     // Transform variables to the format Gitbeaker expects
-    const pipelineVariables = variables 
+    const pipelineVariables = variables
       ? Object.entries(variables).map(([key, value]) => ({
           key,
           value,
@@ -33,10 +37,10 @@ export async function triggerPipeline(
     logger.info("Pipeline created successfully", { pipelineId: pipeline.id });
     return pipeline.id;
   } catch (error) {
-    logger.error("Failed to create pipeline", { 
+    logger.error("Failed to create pipeline", {
       error: error instanceof Error ? error.message : error,
       projectId,
-      ref 
+      ref,
     });
     throw error;
   }
@@ -49,7 +53,7 @@ export async function cancelOldPipelines(
 ): Promise<void> {
   try {
     logger.debug("Fetching pipelines for cancellation", { projectId, ref });
-    
+
     // List pipelines for the ref
     const pipelines = await gitlab.Pipelines.all(projectId, {
       ref,
@@ -61,8 +65,8 @@ export async function cancelOldPipelines(
       .filter((p) => p.id !== keepPipelineId)
       .map((p) =>
         gitlab.Pipelines.cancel(projectId, p.id).catch((err) => {
-          logger.warn(`Failed to cancel pipeline ${p.id}:`, { 
-            error: err instanceof Error ? err.message : err 
+          logger.warn(`Failed to cancel pipeline ${p.id}:`, {
+            error: err instanceof Error ? err.message : err,
           });
         }),
       );
@@ -70,8 +74,8 @@ export async function cancelOldPipelines(
     await Promise.all(cancelPromises);
     logger.info("Old pipelines cancelled", { count: cancelPromises.length });
   } catch (error) {
-    logger.error("Error cancelling old pipelines:", { 
-      error: error instanceof Error ? error.message : error 
+    logger.error("Error cancelling old pipelines:", {
+      error: error instanceof Error ? error.message : error,
     });
     // Don't throw - this is not critical
   }
@@ -86,16 +90,16 @@ export async function getProject(projectId: number): Promise<{
   try {
     logger.debug("Fetching project details", { projectId });
     const project = await gitlab.Projects.show(projectId);
-    
+
     return {
       id: project.id,
       default_branch: project.default_branch || "main",
       path_with_namespace: project.path_with_namespace,
     };
   } catch (error) {
-    logger.error("Failed to fetch project", { 
+    logger.error("Failed to fetch project", {
       error: error instanceof Error ? error.message : error,
-      projectId 
+      projectId,
     });
     throw error;
   }
@@ -115,10 +119,10 @@ export async function branchExists(
     if (error.response?.statusCode === 404) {
       return false;
     }
-    logger.error("Error checking branch", { 
+    logger.error("Error checking branch", {
       error: error instanceof Error ? error.message : error,
       projectId,
-      branchName 
+      branchName,
     });
     throw error;
   }
@@ -135,11 +139,11 @@ export async function createBranch(
     await gitlab.Branches.create(projectId, branchName, ref);
     logger.info("Branch created successfully", { projectId, branchName });
   } catch (error) {
-    logger.error("Failed to create branch", { 
+    logger.error("Failed to create branch", {
       error: error instanceof Error ? error.message : error,
       projectId,
       branchName,
-      ref 
+      ref,
     });
     throw error;
   }
