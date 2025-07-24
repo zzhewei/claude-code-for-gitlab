@@ -17,8 +17,8 @@ In your GitLab project, go to Settings → CI/CD → Variables and add:
 
 ```yaml
 # Required
-GITLAB_TOKEN: your-gitlab-personal-access-token  # With 'api' scope
-WEBHOOK_SECRET: your-webhook-secret  # Same as configured in webhook server
+GITLAB_TOKEN: your-gitlab-personal-access-token # With 'api' scope
+WEBHOOK_SECRET: your-webhook-secret # Same as configured in webhook server
 
 # Choose one authentication method:
 ANTHROPIC_API_KEY: your-anthropic-api-key
@@ -26,7 +26,7 @@ ANTHROPIC_API_KEY: your-anthropic-api-key
 CLAUDE_CODE_OAUTH_TOKEN: your-claude-oauth-token
 
 # Optional
-CLAUDE_MODEL: claude-3-5-sonnet-latest  # Or another model
+CLAUDE_MODEL: claude-3-5-sonnet-latest # Or another model
 CLAUDE_INSTRUCTIONS: |
   Custom instructions for Claude...
 ```
@@ -37,7 +37,7 @@ Copy the `.gitlab-ci.yml` file from this repository to your project root, or inc
 
 ```yaml
 include:
-  - remote: 'https://raw.githubusercontent.com/RealMikeChong/claude-code-for-gitlab/main/gitlab-app/.gitlab-ci.yml'
+  - remote: "https://raw.githubusercontent.com/RealMikeChong/claude-code-for-gitlab/main/gitlab-app/.gitlab-ci.yml"
 ```
 
 ### 3. Configure Webhook in GitLab
@@ -92,7 +92,7 @@ Edit the `.gitlab-ci.yml` to change branch naming:
 
 ```yaml
 variables:
-  CLAUDE_BRANCH_PREFIX: "ai/"  # Default: "claude/"
+  CLAUDE_BRANCH_PREFIX: "ai/" # Default: "claude/"
 ```
 
 ### Custom Claude Instructions
@@ -114,7 +114,7 @@ Use different Claude models:
 
 ```yaml
 variables:
-  CLAUDE_MODEL: "claude-3-5-haiku-latest"  # Faster, cheaper
+  CLAUDE_MODEL: "claude-3-5-haiku-latest" # Faster, cheaper
 ```
 
 ## Troubleshooting
@@ -157,6 +157,7 @@ GITLAB_URL=https://gitlab.company.com
 ### Multi-Project Setup
 
 The webhook server supports multiple projects. Each project needs:
+
 1. Its own webhook configured
 2. The same `WEBHOOK_SECRET`
 3. The `.gitlab-ci.yml` file

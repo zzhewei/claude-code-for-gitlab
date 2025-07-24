@@ -8,10 +8,10 @@ variables:
   # Claude configuration
   CLAUDE_TRIGGER_PHRASE: "@claude"
   CLAUDE_MODEL: "claude-3-5-sonnet-latest"
-  
+
   # Branch configuration
   CLAUDE_BRANCH_PREFIX: "claude/"
-  
+
   # Optional: Custom instructions for Claude
   CLAUDE_INSTRUCTIONS: |
     You are a helpful assistant that fixes bugs and implements features.
@@ -25,14 +25,14 @@ claude_webhook_handler:
   before_script:
     # Install system dependencies
     - apk add --no-cache git openssh-client curl jq
-    
+
     # Clone this repository to get the runner script
     - git clone https://github.com/RealMikeChong/claude-code-for-gitlab.git /tmp/claude-gitlab
-    
+
     # Configure git for the working repository
     - git config --global user.name "Claude Bot"
     - git config --global user.email "claude-bot@${CI_SERVER_HOST}"
-    
+
     # Set up SSH for pushing (if needed)
     - |
       if [ -n "$CLAUDE_DEPLOY_KEY" ]; then
@@ -49,11 +49,11 @@ claude_webhook_handler:
     - echo "Resource ID: ${CLAUDE_RESOURCE_ID}"
     - echo "Branch: ${CLAUDE_BRANCH}"
     - echo "Author: ${CLAUDE_AUTHOR}"
-    
+
     # Checkout the branch where Claude should work
     - git fetch origin ${CLAUDE_BRANCH}:${CLAUDE_BRANCH} || true
     - git checkout ${CLAUDE_BRANCH} || git checkout -b ${CLAUDE_BRANCH}
-    
+
     # Run the Claude runner script
     - node /tmp/claude-gitlab/gitlab-app/scripts/claude-runner.js
   rules:
@@ -76,7 +76,7 @@ claude_webhook_handler:
   script:
     # Read Claude's output
     - CLAUDE_RESPONSE=$(cat claude-output.json | jq -r '.response // "No response generated"')
-    
+
     # Post response based on resource type
     - |
       if [ "$CLAUDE_RESOURCE_TYPE" = "merge_request" ]; then

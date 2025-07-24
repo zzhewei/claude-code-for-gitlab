@@ -80,7 +80,9 @@ export async function cancelOldPipelines(
       ),
     );
   } catch (error) {
-    logger.error("Error cancelling old pipelines:", { error: error instanceof Error ? error.message : error });
+    logger.error("Error cancelling old pipelines:", {
+      error: error instanceof Error ? error.message : error,
+    });
     // Don't throw - this is not critical
   }
 }
@@ -92,34 +94,34 @@ export async function getProject(projectId: number): Promise<{
   path_with_namespace: string;
 }> {
   const url = `${BASE}/api/v4/projects/${projectId}`;
-  
+
   logger.debug("Fetching project details", { projectId, url });
-  
+
   const response = await fetch(url, {
     headers: { "PRIVATE-TOKEN": TOKEN },
   });
-  
+
   if (!response.ok) {
     const error = await response.text();
-    logger.error("Failed to fetch project", { 
-      projectId, 
-      status: response.status, 
-      error 
+    logger.error("Failed to fetch project", {
+      projectId,
+      status: response.status,
+      error,
     });
     throw new Error(`GitLab API error ${response.status}: ${error}`);
   }
-  
-  const data = await response.json() as {
+
+  const data = (await response.json()) as {
     id: number;
     default_branch: string;
     path_with_namespace: string;
   };
-  
-  logger.debug("Project details fetched", { 
-    projectId: data.id, 
-    defaultBranch: data.default_branch 
+
+  logger.debug("Project details fetched", {
+    projectId: data.id,
+    defaultBranch: data.default_branch,
   });
-  
+
   return data;
 }
 
@@ -129,23 +131,23 @@ export async function branchExists(
   branchName: string,
 ): Promise<boolean> {
   const url = `${BASE}/api/v4/projects/${projectId}/repository/branches/${encodeURIComponent(branchName)}`;
-  
+
   logger.debug("Checking if branch exists", { projectId, branchName });
-  
+
   try {
     const response = await fetch(url, {
       headers: { "PRIVATE-TOKEN": TOKEN },
     });
-    
+
     const exists = response.ok;
     logger.debug("Branch existence check", { projectId, branchName, exists });
-    
+
     return exists;
   } catch (error) {
-    logger.error("Error checking branch existence", { 
-      projectId, 
-      branchName, 
-      error 
+    logger.error("Error checking branch existence", {
+      projectId,
+      branchName,
+      error,
     });
     return false;
   }
@@ -158,9 +160,9 @@ export async function createBranch(
   ref: string,
 ): Promise<void> {
   const url = `${BASE}/api/v4/projects/${projectId}/repository/branches`;
-  
+
   logger.info("Creating new branch", { projectId, branchName, ref });
-  
+
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -172,18 +174,18 @@ export async function createBranch(
       ref: ref,
     }),
   });
-  
+
   if (!response.ok) {
     const error = await response.text();
-    logger.error("Failed to create branch", { 
-      projectId, 
-      branchName, 
-      status: response.status, 
-      error 
+    logger.error("Failed to create branch", {
+      projectId,
+      branchName,
+      status: response.status,
+      error,
     });
     throw new Error(`GitLab API error ${response.status}: ${error}`);
   }
-  
+
   logger.info("Branch created successfully", { projectId, branchName });
 }
 

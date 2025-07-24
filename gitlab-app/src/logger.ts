@@ -87,7 +87,10 @@ class Logger {
 
     for (const [key, value] of Object.entries(masked)) {
       const lowerKey = key.toLowerCase();
-      if (sensitiveKeys.some((k) => lowerKey.includes(k)) && typeof value === "string") {
+      if (
+        sensitiveKeys.some((k) => lowerKey.includes(k)) &&
+        typeof value === "string"
+      ) {
         masked[key] = value.substring(0, 4) + "****";
       } else if (typeof value === "object") {
         masked[key] = this.maskSensitive(value);

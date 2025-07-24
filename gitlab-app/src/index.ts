@@ -1,12 +1,12 @@
 import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
-import { 
-  triggerPipeline, 
+import {
+  triggerPipeline,
   cancelOldPipelines,
   getProject,
   branchExists,
   createBranch,
-  sanitizeBranchName
+  sanitizeBranchName,
 } from "./gitlab";
 import { limitByUser } from "./limiter";
 import { logger } from "./logger";
@@ -19,18 +19,18 @@ app.use("*", async (c, next) => {
   const start = Date.now();
   const method = c.req.method;
   const path = c.req.path;
-  
+
   logger.info(`${method} ${path}`, {
     method,
     path,
     headers: logger.maskSensitive(Object.fromEntries(c.req.raw.headers)),
   });
-  
+
   await next();
-  
+
   const duration = Date.now() - start;
   const status = c.res.status;
-  
+
   logger.info(`${method} ${path} ${status} ${duration}ms`, {
     method,
     path,
@@ -65,12 +65,12 @@ app.get(
 app.post("/webhook", async (c) => {
   const gitlabEvent = c.req.header("x-gitlab-event");
   const gitlabToken = c.req.header("x-gitlab-token");
-  
+
   logger.debug("Webhook received", {
     event: gitlabEvent,
     hasToken: !!gitlabToken,
   });
-  
+
   // Verify webhook secret
   if (gitlabToken !== process.env.WEBHOOK_SECRET) {
     logger.warn("Webhook unauthorized - invalid token");
@@ -84,12 +84,12 @@ app.post("/webhook", async (c) => {
   }
 
   const body = await c.req.json<WebhookPayload>();
-  
+
   // Log webhook payload (with sensitive data masked)
   logger.debug("Webhook payload received", {
     payload: logger.maskSensitive(body),
   });
-  
+
   const note = body.object_attributes?.note || "";
   const projectId = body.project?.id;
   const projectPath = body.project?.path_with_namespace;
@@ -103,7 +103,7 @@ app.post("/webhook", async (c) => {
     logger.debug("No @claude mention found in note");
     return c.text("skipped");
   }
-  
+
   if (process.env.CLAUDE_DISABLED === "true") {
     logger.warn("Bot is disabled, skipping trigger");
     return c.text("disabled");
@@ -127,49 +127,49 @@ app.post("/webhook", async (c) => {
 
   // Determine branch ref
   let ref = body.merge_request?.source_branch;
-  
+
   // For issues, create a branch
   if (issueIid && !mrIid) {
     try {
       // Get project details for default branch
       const project = await getProject(projectId);
       const defaultBranch = project.default_branch || "main";
-      
+
       // Generate branch name
       const branchName = `claude/issue-${issueIid}-${sanitizeBranchName(issueTitle || "")}`;
-      
-      logger.info("Checking branch for issue", { 
-        issueIid, 
+
+      logger.info("Checking branch for issue", {
+        issueIid,
         branchName,
-        defaultBranch 
+        defaultBranch,
       });
-      
+
       // Check if branch already exists
       const exists = await branchExists(projectId, branchName);
-      
+
       if (!exists) {
-        logger.info("Creating branch for issue", { 
-          issueIid, 
+        logger.info("Creating branch for issue", {
+          issueIid,
           branchName,
-          fromBranch: defaultBranch 
+          fromBranch: defaultBranch,
         });
-        
+
         await createBranch(projectId, branchName, defaultBranch);
       } else {
         logger.info("Branch already exists", { branchName });
       }
-      
+
       ref = branchName;
     } catch (error) {
-      logger.error("Failed to create branch for issue", { 
-        issueIid, 
-        error: error instanceof Error ? error.message : error 
+      logger.error("Failed to create branch for issue", {
+        issueIid,
+        error: error instanceof Error ? error.message : error,
       });
       // Fall back to default branch
       ref = "main";
     }
   }
-  
+
   // Default to main if no ref determined
   ref = ref || "main";
 
@@ -192,11 +192,11 @@ app.post("/webhook", async (c) => {
 
   try {
     const pipelineId = await triggerPipeline(projectId, ref, variables);
-    
-    logger.info("Pipeline triggered successfully", { 
+
+    logger.info("Pipeline triggered successfully", {
       pipelineId,
       projectId,
-      ref 
+      ref,
     });
 
     // Cancel old pipelines if configured
@@ -206,10 +206,10 @@ app.post("/webhook", async (c) => {
 
     return c.json({ status: "started", pipelineId, branch: ref });
   } catch (error) {
-    logger.error("Failed to trigger pipeline", { 
+    logger.error("Failed to trigger pipeline", {
       error: error instanceof Error ? error.message : error,
       projectId,
-      ref
+      ref,
     });
     return c.json({ error: "Failed to trigger pipeline" }, 500);
   }
