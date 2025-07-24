@@ -37,7 +37,7 @@ Setting up Claude Code as a GitLab application provides several benefits:
 2. Click "Add new application"
 3. Fill in the application details:
    - **Name**: `Claude Code Assistant`
-   - **Redirect URI**: 
+   - **Redirect URI**:
      ```
      https://your-webhook-service.com/oauth/callback
      http://localhost:3000/oauth/callback (for development)
@@ -72,7 +72,7 @@ For self-hosted GitLab, you can create an admin-level application that's availab
 3. Click "New application"
 4. Fill in the details:
    - **Name**: `Claude Code Assistant`
-   - **Redirect URI**: 
+   - **Redirect URI**:
      ```
      https://your-domain.com/oauth/callback
      https://your-internal-domain/oauth/callback (for internal networks)
@@ -116,24 +116,26 @@ Run `gitlab-ctl reconfigure` after making changes.
 For self-hosted instances behind a firewall:
 
 1. **Webhook Endpoint Access**:
+
    ```bash
    # Allow incoming webhooks (if hosting webhook service)
    sudo ufw allow 443/tcp
-   
+
    # Allow outgoing requests to Claude API
    sudo ufw allow out 443/tcp to any
    ```
 
 2. **SSL Configuration**:
+
    ```nginx
    # Example nginx configuration for webhook service
    server {
        listen 443 ssl http2;
        server_name claude-webhook.your-domain.com;
-       
+
        ssl_certificate /path/to/cert.pem;
        ssl_certificate_key /path/to/key.pem;
-       
+
        location / {
            proxy_pass http://localhost:3000;
            proxy_set_header Host $host;
@@ -194,7 +196,7 @@ DATABASE_URL=postgresql://user:pass@localhost/claude_gitlab
 
 ```yaml
 # docker-compose.yml
-version: '3.8'
+version: "3.8"
 
 services:
   webhook-service:
@@ -212,7 +214,7 @@ services:
     volumes:
       - ./logs:/app/logs
     restart: unless-stopped
-    
+
   # Optional: PostgreSQL for token storage
   postgres:
     image: postgres:15-alpine
@@ -349,12 +351,11 @@ For development/internal use only:
 
 ```javascript
 // In webhook service
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 // Or in GitLab CI
-variables:
-  GIT_SSL_NO_VERIFY: "true"
-  NODE_TLS_REJECT_UNAUTHORIZED: "0"
+variables: GIT_SSL_NO_VERIFY: "true";
+NODE_TLS_REJECT_UNAUTHORIZED: "0";
 ```
 
 ### Permission Denied Errors
@@ -393,6 +394,7 @@ gitlab_rails['rate_limit_trusted_ips'] = ['webhook.server.ip']
 ## Support
 
 For issues specific to:
+
 - **GitLab application setup**: Check GitLab documentation or GitLab support
 - **Claude Code integration**: Open an issue in this repository
 - **Self-hosted configurations**: Review your GitLab instance logs and network configuration

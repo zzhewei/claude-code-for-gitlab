@@ -91,7 +91,7 @@ openssl rand -hex 32
 
 ```yaml
 # docker-compose.yml
-version: '3.8'
+version: "3.8"
 
 services:
   webhook-service:
@@ -169,6 +169,7 @@ WantedBy=multi-user.target
 ```
 
 Enable and start:
+
 ```bash
 sudo systemctl enable claude-gitlab-webhook
 sudo systemctl start claude-gitlab-webhook
@@ -193,34 +194,34 @@ spec:
         app: claude-gitlab-webhook
     spec:
       containers:
-      - name: webhook-service
-        image: your-registry/claude-gitlab-webhook:latest
-        ports:
-        - containerPort: 3000
-        envFrom:
-        - secretRef:
-            name: claude-gitlab-secrets
-        - configMapRef:
-            name: claude-gitlab-config
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 3000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 3000
-          initialDelaySeconds: 5
-          periodSeconds: 5
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
+        - name: webhook-service
+          image: your-registry/claude-gitlab-webhook:latest
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: claude-gitlab-secrets
+            - configMapRef:
+                name: claude-gitlab-config
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
 ```
 
 ## SSL/TLS Configuration
@@ -255,22 +256,22 @@ server {
 
     ssl_certificate /etc/letsencrypt/live/claude-webhook.your-domain.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/claude-webhook.your-domain.com/privkey.pem;
-    
+
     # SSL configuration
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
     ssl_prefer_server_ciphers on;
-    
+
     # Security headers
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     add_header X-Frame-Options "DENY" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
-    
+
     # Rate limiting
     limit_req_zone $binary_remote_addr zone=webhook:10m rate=10r/s;
     limit_req zone=webhook burst=20 nodelay;
-    
+
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
@@ -281,13 +282,13 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
-        
+
         # Timeouts
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
     }
-    
+
     # Health check endpoint
     location /health {
         proxy_pass http://localhost:3000/health;
@@ -345,6 +346,7 @@ curl -X POST https://claude-webhook.your-domain.com/webhook \
 ### Log Configuration
 
 The service uses Winston for logging. Logs are stored in:
+
 - `logs/combined.log` - All logs
 - `logs/error.log` - Error logs only
 
@@ -369,7 +371,7 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
-      
+
   grafana:
     image: grafana/grafana
     ports:
@@ -414,6 +416,7 @@ bantime = 3600
 ### 3. Rate Limiting
 
 Configure in `.env`:
+
 ```env
 RATE_LIMIT_WINDOW=60000  # 1 minute
 RATE_LIMIT_MAX_REQUESTS=10
@@ -424,6 +427,7 @@ RATE_LIMIT_SKIP_FAILED=false
 ### 4. Input Validation
 
 The service validates:
+
 - GitLab webhook signatures
 - User permissions
 - Request payloads
@@ -434,21 +438,24 @@ The service validates:
 ### Common Issues
 
 1. **Webhook not receiving events**
+
    ```bash
    # Check GitLab webhook logs
    # Project → Settings → Webhooks → Edit → Recent events
-   
+
    # Check service logs
    docker logs claude-gitlab-webhook
    ```
 
 2. **SSL certificate issues**
+
    ```bash
    # For self-signed certificates (development only)
    NODE_TLS_REJECT_UNAUTHORIZED=0 npm start
    ```
 
 3. **Permission denied errors**
+
    ```bash
    # Check GitLab token permissions
    curl -H "PRIVATE-TOKEN: your_token" \
@@ -464,6 +471,7 @@ The service validates:
 ### Debug Mode
 
 Enable debug logging:
+
 ```env
 LOG_LEVEL=debug
 NODE_ENV=development
@@ -473,19 +481,19 @@ NODE_ENV=development
 
 ```javascript
 // Custom health check implementation
-app.get('/health', async (req, res) => {
+app.get("/health", async (req, res) => {
   const health = {
     uptime: process.uptime(),
     timestamp: Date.now(),
-    status: 'OK',
+    status: "OK",
     checks: {
       gitlab: await checkGitLabConnection(),
       claude: await checkClaudeConnection(),
-      database: await checkDatabaseConnection()
-    }
+      database: await checkDatabaseConnection(),
+    },
   };
-  
-  const allHealthy = Object.values(health.checks).every(check => check);
+
+  const allHealthy = Object.values(health.checks).every((check) => check);
   res.status(allHealthy ? 200 : 503).json(health);
 });
 ```
@@ -523,9 +531,9 @@ upstream claude_webhook {
 
 ```javascript
 // Redis caching for OAuth tokens
-const redis = require('redis');
+const redis = require("redis");
 const client = redis.createClient({
-  url: process.env.REDIS_URL
+  url: process.env.REDIS_URL,
 });
 
 // Cache OAuth tokens
@@ -568,6 +576,7 @@ docker-compose up -d
 ## Support
 
 For issues:
+
 1. Check the [troubleshooting section](#troubleshooting)
 2. Review logs in `logs/error.log`
 3. Open an issue on GitHub with:

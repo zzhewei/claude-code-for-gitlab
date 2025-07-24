@@ -15,6 +15,7 @@ This is a GitHub Action that integrates Claude into GitHub workflows, forked wit
 ## Development Commands
 
 ### Setup and Installation
+
 ```bash
 # Install dependencies
 bun install
@@ -24,6 +25,7 @@ bun run install-hooks
 ```
 
 ### Core Development Tasks
+
 ```bash
 # Run tests
 bun test
@@ -39,12 +41,15 @@ bun run format:check
 ```
 
 ### Development Workflow
+
 After making changes, the pre-push hook automatically runs:
+
 1. Format check (auto-formats if needed)
-2. TypeScript type checking  
+2. TypeScript type checking
 3. Test suite
 
 To run these checks manually before pushing:
+
 ```bash
 bun run format:check && bun run typecheck && bun test
 ```
@@ -52,11 +57,12 @@ bun run format:check && bun run typecheck && bun test
 ## Architecture
 
 ### Technology Stack
+
 - **Runtime**: Bun (v1.2.11+)
 - **Language**: TypeScript (strict mode)
 - **Key Libraries**:
   - @modelcontextprotocol/sdk (MCP support)
-  - @octokit/* (GitHub API)
+  - @octokit/\* (GitHub API)
   - zod (schema validation)
 
 ### Two-Layer Structure
@@ -65,6 +71,7 @@ bun run format:check && bun run typecheck && bun test
 2. **Base Action Layer** (`/base-action/`): Core Claude Code execution logic
 
 ### Project Structure
+
 ```
 ├── src/
 │   ├── entrypoints/      # Main entry points
@@ -79,6 +86,7 @@ bun run format:check && bun run typecheck && bun test
 ```
 
 ### Key Components
+
 - **Trigger System** (`src/check-trigger.ts`): Detects `@claude` mentions in comments/issues
 - **Context Gathering** (`src/github/github-data-fetcher.ts`): Fetches PR/issue data, comments, files
 - **Branch Management** (`src/github/branch-manager.ts`): Creates and manages branches for Claude's work
