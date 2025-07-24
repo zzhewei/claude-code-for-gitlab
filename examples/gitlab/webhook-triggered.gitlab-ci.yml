@@ -9,7 +9,7 @@
 
 # Define the Claude Code job that will be triggered by webhooks
 claude_webhook_handler:
-  image: oven/bun:1.1.29-alpine
+  image: oven/bun:slim
   stage: build
   before_script:
     # Install git for repository operations
