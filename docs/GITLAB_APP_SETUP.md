@@ -36,6 +36,7 @@ Setting up Claude Code as a GitLab application provides several benefits:
 1. Go to [GitLab Application Settings](https://gitlab.com/-/user_settings/applications)
 2. Click "Add new application"
 3. Fill in the application details:
+
    - **Name**: `Claude Code Assistant`
    - **Redirect URI**:
      ```
@@ -71,6 +72,7 @@ For self-hosted GitLab, you can create an admin-level application that's availab
 2. Navigate to **Admin Area** → **Applications**
 3. Click "New application"
 4. Fill in the details:
+
    - **Name**: `Claude Code Assistant`
    - **Redirect URI**:
      ```
