@@ -13,7 +13,7 @@ claude_webhook_handler:
   stage: build
   before_script:
     # Install git for repository operations
-    - apk add --no-cache git openssh-client
+    - apt-get update && apt-get install -y git openssh-client
 
     # Clone Claude Code for GitLab
     - git clone https://github.com/RealMikeChong/claude-code-for-gitlab.git /tmp/claude-code
