@@ -13,6 +13,19 @@ A lightweight webhook server that listens for `@claude` mentions in GitLab issue
 
 ## Quick Start
 
+### Using Pre-built Docker Image
+
+```bash
+docker run -d \
+  --name gitlab-claude-webhook \
+  -p 3000:3000 \
+  -e GITLAB_TOKEN=glpat-xxxxxxxxxxxxxxxxxxxx \
+  -e WEBHOOK_SECRET=your-webhook-secret-here \
+  ghcr.io/realmikechong/claude-code-gitlab-app:latest
+```
+
+### Using Docker Compose
+
 1. Copy `.env.example` to `.env` and configure:
    ```bash
    cp .env.example .env

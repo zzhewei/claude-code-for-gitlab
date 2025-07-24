@@ -21,9 +21,7 @@ on:
 
 env:
   # GitHub Container Registry
-  GHCR_REPOSITORY: ghcr.io/realmikechong/claude-code-for-gitlab
-  # Docker Hub (optional)
-  DOCKER_HUB_REPOSITORY: realmikechong/claude-code-for-gitlab
+  GHCR_REPOSITORY: ghcr.io/realmikechong/claude-code-gitlab-app
 
 jobs:
   build-and-push:
@@ -40,13 +38,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
-        continue-on-error: true
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Log in to GitHub Container Registry
         if: github.event_name != 'pull_request'
@@ -62,7 +53,6 @@ jobs:
         with:
           images: |
             ${{ env.GHCR_REPOSITORY }}
-            ${{ env.DOCKER_HUB_REPOSITORY }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
