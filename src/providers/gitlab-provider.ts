@@ -84,8 +84,8 @@ export class GitLabProvider implements SCMProvider {
   private async validateToken(): Promise<void> {
     try {
       console.log("Testing token validity...");
-      // Use 'me' to get current user in @gitbeaker
-      const user = await this.api.Users.show("me");
+      // Use showCurrentUser() to get current user in @gitbeaker
+      const user = await this.api.Users.showCurrentUser();
       console.log(
         `Token is valid. Authenticated as: ${user.username} (${user.name})`,
       );
@@ -340,32 +340,11 @@ export class GitLabProvider implements SCMProvider {
           `Creating issue comment for project ${this.context.projectId}, issue ${this.context.issueIid}`,
         );
 
-        // First check if we can access the issue
-        try {
-          const issue = await this.api.Issues.show(
-            this.context.projectId,
-            parseInt(this.context.issueIid),
-          );
-          console.log(
-            `Issue ${this.context.issueIid} exists and is accessible`,
-          );
-        } catch (issueError: any) {
-          console.error(
-            `Cannot access issue ${this.context.issueIid}:`,
-            issueError.message,
-          );
-          if (issueError.response?.status) {
-            console.error(
-              `Issue access error status: ${issueError.response.status}`,
-            );
-          }
-        }
-
-        // @gitbeaker expects the note body in an options object
+        // @gitbeaker expects the note body as a string parameter
         note = (await this.api.IssueNotes.create(
           this.context.projectId,
           parseInt(this.context.issueIid),
-          { body },
+          body,
         )) as unknown as GitLabNote;
       } else {
         throw new Error(
