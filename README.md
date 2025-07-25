@@ -1,172 +1,126 @@
 ![Claude Code Action responding to a comment](https://github.com/user-attachments/assets/1d60c2e9-82ed-4ee5-b749-f9e021c85f4d)
 
-# Claude Code Action
+# 🦊 Claude Code for GitLab
 
-> **📚 GitLab Users**: See the [GitLab Setup Guide](./docs/GITLAB_APP_SETUP.md) for GitLab-specific setup instructions and the [GitLab Token Troubleshooting Guide](./docs/GITLAB_TOKEN_TROUBLESHOOTING.md) if you encounter authentication issues.
+## 🚨 THIS REPOSITORY IS FOR GITLAB INTEGRATION ONLY! 🚨
 
-A general-purpose [Claude Code](https://claude.ai/code) action for GitHub PRs and issues that can answer questions and implement code changes. This action listens for a trigger phrase in comments and activates Claude act on the request. It supports multiple authentication methods including Anthropic direct API, Amazon Bedrock, and Google Vertex AI.
+### Looking for GitHub?
 
-## Features
+👉 **GitHub users should use the official action: [anthropics/claude-code-action](https://github.com/anthropics/claude-code-action)**
+
+---
+
+## What is this?
+
+**This is a GitLab-specific fork** that provides Claude Code integration for GitLab CI/CD pipelines and self-hosted GitLab instances. It includes:
+
+- 🦊 **Full GitLab CI/CD Support**: Native integration with GitLab pipelines
+- 🏢 **Self-Hosted GitLab**: Works with both GitLab.com and self-hosted instances
+- 🔐 **GitLab Authentication**: Uses GitLab OAuth apps and CI job tokens
+- 🪝 **Webhook Service**: Real-time response to GitLab issues and merge requests
+- 📦 **Docker Deployment**: Ready-to-deploy webhook service with Docker
+
+> **📚 GitLab Setup**: See the [GitLab Setup Guide](./docs/GITLAB_APP_SETUP.md) for GitLab-specific setup instructions and the [GitLab Token Troubleshooting Guide](./docs/GITLAB_TOKEN_TROUBLESHOOTING.md) if you encounter authentication issues.
+
+## Overview
+
+A GitLab-specific implementation of [Claude Code](https://claude.ai/code) that brings AI-powered assistance to GitLab merge requests and issues. This project enables Claude to respond to mentions in GitLab comments, implement code changes, and provide intelligent code assistance directly within your GitLab workflow.
+
+## Key Features
 
 - 🤖 **Interactive Code Assistant**: Claude can answer questions about code, architecture, and programming
 - 🔍 **Code Review**: Analyzes PR changes and suggests improvements
 - ✨ **Code Implementation**: Can implement simple fixes, refactoring, and even new features
-- 💬 **PR/Issue Integration**: Works seamlessly with GitHub comments and PR reviews
-- 🛠️ **Flexible Tool Access**: Access to GitHub APIs and file operations (additional tools can be enabled via configuration)
-- 📋 **Progress Tracking**: Visual progress indicators with checkboxes that dynamically update as Claude completes tasks
-- 🏃 **Runs on Your Infrastructure**: The action executes entirely on your own GitHub runner (Anthropic API calls go to your chosen provider)
-- 🦊 **GitLab Support**: Full support for GitLab CI/CD and self-hosted instances (see [GitLab Setup Guide](./docs/GITLAB_APP_SETUP.md))
+- 💬 **MR/Issue Integration**: Works seamlessly with GitLab comments and merge request reviews
+- 🛠️ **Flexible Tool Access**: Access to GitLab APIs and file operations (additional tools can be enabled via configuration)
+- 📋 **Progress Tracking**: Real-time updates in GitLab comments as Claude completes tasks
+- 🏃 **Runs on Your Infrastructure**: Executes entirely in your GitLab runners (Anthropic API calls go to your chosen provider)
+- 🏢 **Enterprise Ready**: Full support for self-hosted GitLab instances with custom domains
 
-## Quickstart
+## GitLab Quick Start
 
-The easiest way to set up this action is through [Claude Code](https://claude.ai/code) in the terminal. Just open `claude` and run `/install-github-app`.
+### Option 1: Webhook Service (Recommended)
 
-This command will guide you through setting up the GitHub app and required secrets.
+Deploy the webhook service for real-time responses to GitLab mentions:
 
-**Note**:
+```bash
+# Using Docker
+docker run -d \
+  --name gitlab-claude-webhook \
+  -p 3000:3000 \
+  -e GITLAB_TOKEN=glpat-xxxxxxxxxxxxxxxxxxxx \
+  -e WEBHOOK_SECRET=your-webhook-secret-here \
+  -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
+  ghcr.io/realmikechong/claude-code-gitlab-app:latest
+```
 
-- You must be a repository admin to install the GitHub app and add secrets
-- This quickstart method is only available for direct Anthropic API users. If you're using AWS Bedrock, please see the instructions below.
+Then configure webhooks in your GitLab project settings. See the [GitLab App Setup Guide](./docs/GITLAB_APP_SETUP.md) for detailed instructions.
 
-### Manual Setup (Direct API)
+### Option 2: GitLab CI/CD Pipeline
 
-**Requirements**: You must be a repository admin to complete these steps.
+Add to your `.gitlab-ci.yml`:
 
-1. Install the Claude GitHub app to your repository: https://github.com/apps/claude
-2. Add authentication to your repository secrets ([Learn how to use secrets in GitHub Actions](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions)):
-   - Either `ANTHROPIC_API_KEY` for API key authentication
-   - Or `CLAUDE_CODE_OAUTH_TOKEN` for OAuth token authentication (Pro and Max users can generate this by running `claude setup-token` locally)
-3. Copy the workflow file from [`examples/claude.yml`](./examples/claude.yml) into your repository's `.github/workflows/`
+```yaml
+include:
+  - remote: "https://raw.githubusercontent.com/RealMikeChong/claude-code-for-gitlab/main/gitlab-claude-unified.yml"
 
-### Using a Custom GitHub App
+variables:
+  CLAUDE_CODE_OAUTH_TOKEN: $CLAUDE_CODE_OAUTH_TOKEN
+  # Or use: ANTHROPIC_API_KEY: $ANTHROPIC_API_KEY
+```
 
-If you prefer not to install the official Claude app, you can create your own GitHub App to use with this action. This gives you complete control over permissions and access.
+**Requirements**:
 
-**When you may want to use a custom GitHub App:**
+- GitLab Runner with Docker executor
+- Claude authentication (API key or OAuth token)
+- Developer or higher permissions in the GitLab project
 
-- You need more restrictive permissions than the official app
-- Organization policies prevent installing third-party apps
-- You're using AWS Bedrock or Google Vertex AI
+## Detailed Setup Instructions
 
-**Steps to create and use a custom GitHub App:**
+### Setting Up GitLab Variables
 
-1. **Create a new GitHub App:**
+1. **Navigate to your GitLab project**
+2. Go to **Settings** → **CI/CD** → **Variables**
+3. Add the following variables:
+   - `CLAUDE_CODE_OAUTH_TOKEN`: Your Claude OAuth token (Pro/Max users can generate this by running `claude setup-token` locally)
+   - OR `ANTHROPIC_API_KEY`: Your Anthropic API key
+   - `CLAUDE_CODE_GL_ACCESS_TOKEN`: GitLab personal access token with `api` scope (for posting comments)
 
-   - Go to https://github.com/settings/apps (for personal apps) or your organization's settings
-   - Click "New GitHub App"
-   - Configure the app with these minimum permissions:
-     - **Repository permissions:**
-       - Contents: Read & Write
-       - Issues: Read & Write
-       - Pull requests: Read & Write
-     - **Account permissions:** None required
-   - Set "Where can this GitHub App be installed?" to your preference
-   - Create the app
+### Webhook Service Configuration
 
-2. **Generate and download a private key:**
+For the webhook service, you'll also need:
 
-   - After creating the app, scroll down to "Private keys"
-   - Click "Generate a private key"
-   - Download the `.pem` file (keep this secure!)
+- `GITLAB_TOKEN`: Personal access token with `api` scope
+- `WEBHOOK_SECRET`: A random secret for webhook validation
+- `GITLAB_URL`: Your GitLab instance URL (defaults to https://gitlab.com)
 
-3. **Install the app on your repository:**
+See the [GitLab App Setup Guide](./docs/GITLAB_APP_SETUP.md) for complete setup instructions including:
 
-   - Go to the app's settings page
-   - Click "Install App"
-   - Select the repositories where you want to use Claude
-
-4. **Add the app credentials to your repository secrets:**
-
-   - Go to your repository's Settings → Secrets and variables → Actions
-   - Add these secrets:
-     - `APP_ID`: Your GitHub App's ID (found in the app settings)
-     - `APP_PRIVATE_KEY`: The contents of the downloaded `.pem` file
-
-5. **Update your workflow to use the custom app:**
-
-   ```yaml
-   name: Claude with Custom App
-   on:
-     issue_comment:
-       types: [created]
-     # ... other triggers
-
-   jobs:
-     claude-response:
-       runs-on: ubuntu-latest
-       steps:
-         # Generate a token from your custom app
-         - name: Generate GitHub App token
-           id: app-token
-           uses: actions/create-github-app-token@v1
-           with:
-             app-id: ${{ secrets.APP_ID }}
-             private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
-         # Use Claude with your custom app's token
-         - uses: anthropics/claude-code-action@beta
-           with:
-             anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-             github_token: ${{ steps.app-token.outputs.token }}
-             # ... other configuration
-   ```
-
-**Important notes:**
-
-- The custom app must have read/write permissions for Issues, Pull Requests, and Contents
-- Your app's token will have the exact permissions you configured, nothing more
-
-For more information on creating GitHub Apps, see the [GitHub documentation](https://docs.github.com/en/apps/creating-github-apps).
+- Creating GitLab OAuth applications
+- Configuring webhooks
+- Setting up for self-hosted GitLab instances
+- Docker deployment options
 
 ## 📚 FAQ
 
 Having issues or questions? Check out our [Frequently Asked Questions](./FAQ.md) for solutions to common problems and detailed explanations of Claude's capabilities and limitations.
 
-## Usage
+## 📖 Complete Documentation
 
-Add a workflow file to your repository (e.g., `.github/workflows/claude.yml`):
+For full documentation including all configuration options, advanced features, and troubleshooting:
 
-```yaml
-name: Claude Assistant
-on:
-  issue_comment:
-    types: [created]
-  pull_request_review_comment:
-    types: [created]
-  issues:
-    types: [opened, assigned, labeled]
-  pull_request_review:
-    types: [submitted]
+- 🦊 **[GitLab Webhook Service Documentation](./gitlab-app/README.md)** - Complete guide for the webhook service
+- 📚 **[GitLab App Setup Guide](./docs/GITLAB_APP_SETUP.md)** - Detailed setup instructions for GitLab
+- 🔧 **[GitLab Token Troubleshooting](./docs/GITLAB_TOKEN_TROUBLESHOOTING.md)** - Common authentication issues and solutions
+- 🚀 **[GitLab Examples](./examples/gitlab/)** - Sample configurations and use cases
 
-jobs:
-  claude-response:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: anthropics/claude-code-action@beta
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          # Or use OAuth token instead:
-          # claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          # Optional: set execution mode (default: tag)
-          # mode: "tag"
-          # Optional: add custom trigger phrase (default: @claude)
-          # trigger_phrase: "/claude"
-          # Optional: add assignee trigger for issues
-          # assignee_trigger: "claude"
-          # Optional: add label trigger for issues
-          # label_trigger: "claude"
-          # Optional: add custom environment variables (YAML format)
-          # claude_env: |
-          #   NODE_ENV: test
-          #   DEBUG: true
-          #   API_URL: https://api.example.com
-          # Optional: limit the number of conversation turns
-          # max_turns: "5"
-          # Optional: grant additional permissions (requires corresponding GitHub token permissions)
-          # additional_permissions: |
-          #   actions: read
-```
+---
+
+## ⚠️ Important Notes for GitHub Users
+
+This repository contains GitLab-specific modifications that are **NOT compatible with GitHub Actions**. The original GitHub Action functionality has been adapted for GitLab CI/CD pipelines.
+
+**GitHub users should NOT use this repository**. Instead, use the official GitHub Action at [anthropics/claude-code-action](https://github.com/anthropics/claude-code-action).
 
 ## Inputs
 

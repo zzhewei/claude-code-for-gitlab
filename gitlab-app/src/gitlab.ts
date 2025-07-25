@@ -191,7 +191,49 @@ export async function createBranch(
 ): Promise<void> {
   try {
     logger.info("Creating new branch", { projectId, branchName, ref });
-    await gitlab.Branches.create(projectId, branchName, ref);
+
+    // Use raw API for better error handling
+    const gitlabUrl = process.env.GITLAB_URL || "https://gitlab.com";
+    const token = process.env.GITLAB_TOKEN!;
+
+    const response = await fetch(
+      `${gitlabUrl}/api/v4/projects/${projectId}/repository/branches`,
+      {
+        method: "POST",
+        headers: {
+          "PRIVATE-TOKEN": token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          branch: branchName,
+          ref: ref,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = `Branch creation failed: ${response.statusText}`;
+
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        // Use raw error text if not JSON
+        errorMessage = errorText || errorMessage;
+      }
+
+      logger.error("Branch creation API error", {
+        status: response.status,
+        errorMessage,
+        projectId,
+        branchName,
+        ref,
+      });
+
+      throw new Error(errorMessage);
+    }
+
     logger.info("Branch created successfully", { projectId, branchName });
   } catch (error) {
     logger.error("Failed to create branch", {

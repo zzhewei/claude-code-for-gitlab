@@ -152,43 +152,33 @@ app.post("/webhook", async (c) => {
       const project = await getProject(projectId);
       const defaultBranch = project.default_branch || "main";
 
-      // Generate branch name
-      const branchName = `claude/issue-${issueIid}-${sanitizeBranchName(issueTitle || "")}`;
+      // Generate branch name with timestamp to ensure uniqueness
+      const timestamp = Date.now();
+      const branchName = `claude/issue-${issueIid}-${sanitizeBranchName(issueTitle || "")}-${timestamp}`;
 
-      logger.info("Checking branch for issue", {
+      logger.info("Creating branch for issue", {
         issueIid,
         branchName,
-        defaultBranch,
+        fromBranch: defaultBranch,
       });
 
-      // Check if branch already exists
-      const exists = await branchExists(projectId, branchName);
-
-      if (!exists) {
-        logger.info("Creating branch for issue", {
-          issueIid,
-          branchName,
-          fromBranch: defaultBranch,
-        });
-
-        await createBranch(projectId, branchName, defaultBranch);
-      } else {
-        logger.info("Branch already exists", { branchName });
-      }
-
+      // Try to create the branch
+      await createBranch(projectId, branchName, defaultBranch);
       ref = branchName;
     } catch (error) {
       logger.error("Failed to create branch for issue", {
         issueIid,
         error: error instanceof Error ? error.message : error,
       });
-      // Fall back to default branch
-      ref = "main";
-    }
-  }
 
-  // Default to main if no ref determined
-  ref = ref || "main";
+      // Don't fall back to main - fail the request
+      return c.text("branch-creation-failed", 500);
+    }
+  } else if (!ref) {
+    // For merge requests without a source branch, fail
+    logger.error("No branch ref determined for merge request");
+    return c.text("no-branch-ref", 400);
+  }
 
   // Extract the prompt after the trigger phrase
   const promptMatch = note.match(

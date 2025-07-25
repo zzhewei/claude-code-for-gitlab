@@ -164,3 +164,18 @@ bun run dev
 # Type check
 bun run typecheck
 ```
+
+## Branch Creation Behavior
+
+When Claude is triggered from a GitLab issue comment:
+
+1. **Automatic Branch Creation**: A new branch is created with the format `claude/issue-{IID}-{sanitized-title}-{timestamp}`
+2. **Unique Branch Names**: Timestamps ensure each branch is unique, preventing conflicts
+3. **No Main Branch Execution**: If branch creation fails, the webhook returns an error. Claude will **never** execute on the main/default branch
+4. **Merge Request Source**: For existing merge requests, Claude uses the MR's source branch
+
+This ensures that:
+
+- Protected branches remain safe from automated changes
+- Each Claude execution has its own isolated branch
+- Failed branch creation stops the process entirely (fail-safe behavior)
