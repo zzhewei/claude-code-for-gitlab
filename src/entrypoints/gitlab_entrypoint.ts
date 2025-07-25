@@ -215,6 +215,11 @@ async function createMergeRequest(
     // Add all changes
     await $`git add -A`.quiet();
 
+    // Show what files were changed
+    console.log("Files to be committed:");
+    const statusResult = await $`git status --short`.quiet();
+    console.log(statusResult.stdout.toString());
+
     // Commit with descriptive message
     const commitMessage = `fix: Apply Claude's suggestions for ${process.env.CLAUDE_RESOURCE_TYPE} #${process.env.CLAUDE_RESOURCE_ID}
 
@@ -233,8 +238,17 @@ See the original ${process.env.CLAUDE_RESOURCE_TYPE} for context.`;
     const resourceUrl = `${process.env.CI_SERVER_URL}/${process.env.CI_PROJECT_PATH}/-/${process.env.CLAUDE_RESOURCE_TYPE === "issue" ? "issues" : "merge_requests"}/${process.env.CLAUDE_RESOURCE_ID}`;
     const mrDescription = `Automated MR by Claude AI. See ${resourceUrl} for context. /cc @${process.env.GITLAB_USER_LOGIN || "claude"}`;
 
-    // Set up git remote with CI_JOB_TOKEN
-    const gitRemoteUrl = `https://gitlab-ci-token:${process.env.CI_JOB_TOKEN}@${process.env.CI_SERVER_HOST}/${process.env.CI_PROJECT_PATH}.git`;
+    // Set up git remote with proper authentication
+    // Use CLAUDE_CODE_GL_ACCESS_TOKEN if available, otherwise fall back to CI_JOB_TOKEN
+    const gitToken =
+      process.env.CLAUDE_CODE_GL_ACCESS_TOKEN || process.env.CI_JOB_TOKEN;
+    const tokenType = process.env.CLAUDE_CODE_GL_ACCESS_TOKEN
+      ? "oauth2"
+      : "gitlab-ci-token";
+
+    console.log(`Using ${tokenType} for git authentication`);
+
+    const gitRemoteUrl = `https://${tokenType}:${gitToken}@${process.env.CI_SERVER_HOST}/${process.env.CI_PROJECT_PATH}.git`;
     await $`git remote set-url origin ${gitRemoteUrl}`.quiet();
 
     // Push with MR creation options
