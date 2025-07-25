@@ -51,13 +51,21 @@ async function runPreparePhase(): Promise<PhaseResult> {
       };
     }
 
-    // Extract comment ID from the output
-    // Look for a line like "::set-output name=comment_id::12345"
+    // Extract comment ID from file written by prepare.ts
     let commentId: number | undefined;
-    const commentIdMatch = output.match(/::set-output name=comment_id::(\d+)/);
-    if (commentIdMatch && commentIdMatch[1]) {
-      commentId = parseInt(commentIdMatch[1]);
-      console.log(`Extracted comment ID: ${commentId}`);
+    try {
+      const fs = await import("fs");
+      if (fs.existsSync("/tmp/claude-comment-id.txt")) {
+        const commentIdStr = fs
+          .readFileSync("/tmp/claude-comment-id.txt", "utf-8")
+          .trim();
+        if (commentIdStr) {
+          commentId = parseInt(commentIdStr);
+          console.log(`Extracted comment ID from file: ${commentId}`);
+        }
+      }
+    } catch (error) {
+      console.error("Error reading comment ID file:", error);
     }
 
     return {

@@ -296,8 +296,12 @@ async function runGitLab() {
     // Also set as environment variable for GitLab
     process.env.CLAUDE_COMMENT_ID = commentId.toString();
 
-    // Output the comment ID so it can be captured by the parent process
-    console.log(`::set-output name=comment_id::${commentId}`);
+    // For GitLab, write to a file that can be read by the parent process
+    const fileSystem = await import("fs");
+    fileSystem.writeFileSync(
+      "/tmp/claude-comment-id.txt",
+      commentId.toString(),
+    );
 
     // Step 8: GitLab-specific setup
     console.log("Step 8: GitLab-specific setup - creating prompt for Claude");
