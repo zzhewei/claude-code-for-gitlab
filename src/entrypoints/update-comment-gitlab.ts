@@ -88,11 +88,14 @@ async function run() {
     // Get GitLab context from environment
     const projectId = process.env.CI_PROJECT_ID;
     const mrIid = process.env.CI_MERGE_REQUEST_IID;
+    const issueIid = process.env.CI_ISSUE_IID || process.env.CLAUDE_RESOURCE_ID;
     const gitlabHost = process.env.CI_SERVER_URL || "https://gitlab.com";
     const gitlabToken =
-      process.env.GITLAB_TOKEN || process.env.CLAUDE_CODE_OAUTH_TOKEN;
+      process.env.CLAUDE_CODE_GL_ACCESS_TOKEN ||
+      process.env.CLAUDE_CODE_OAUTH_TOKEN ||
+      process.env.GITLAB_TOKEN;
 
-    if (!projectId || !mrIid || !gitlabToken) {
+    if (!projectId || (!mrIid && !issueIid) || !gitlabToken) {
       throw new Error("Missing required GitLab environment variables");
     }
 
@@ -113,10 +116,29 @@ async function run() {
 
     // Fetch the original comment
     try {
-      const notes = (await api.MergeRequestNotes.all(
-        projectId,
-        parseInt(mrIid),
-      )) as unknown as GitLabNote[];
+      let notes: GitLabNote[];
+      let resourceType: string;
+      let resourceIid: number;
+      
+      if (mrIid) {
+        // Merge request context
+        notes = (await api.MergeRequestNotes.all(
+          projectId,
+          parseInt(mrIid),
+        )) as unknown as GitLabNote[];
+        resourceType = "merge request";
+        resourceIid = parseInt(mrIid);
+      } else if (issueIid) {
+        // Issue context
+        notes = (await api.IssueNotes.all(
+          projectId,
+          parseInt(issueIid),
+        )) as unknown as GitLabNote[];
+        resourceType = "issue";
+        resourceIid = parseInt(issueIid);
+      } else {
+        throw new Error("No merge request or issue context found");
+      }
 
       const originalComment = notes.find((note) => note.id === commentId);
       if (!originalComment) {
@@ -138,11 +160,17 @@ async function run() {
       );
 
       // Update the comment
-      await api.MergeRequestNotes.edit(projectId, parseInt(mrIid), commentId, {
-        body: updatedBody,
-      });
+      if (mrIid) {
+        await api.MergeRequestNotes.edit(projectId, resourceIid, commentId, {
+          body: updatedBody,
+        });
+      } else {
+        await api.IssueNotes.edit(projectId, resourceIid, commentId, {
+          body: updatedBody,
+        });
+      }
 
-      console.log(`✅ Updated GitLab merge request note ${commentId}.`);
+      console.log(`✅ Updated GitLab ${resourceType} note ${commentId}.`);
     } catch (error) {
       throw new Error(`Failed to fetch or update comment: ${error}`);
     }
