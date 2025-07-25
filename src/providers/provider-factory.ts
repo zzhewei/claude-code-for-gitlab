@@ -120,7 +120,7 @@ export function getToken(): string {
     const glAccessToken = process.env.CLAUDE_CODE_GL_ACCESS_TOKEN;
     if (glAccessToken) {
       // Check if the token is a literal environment variable string (not expanded)
-      if (glAccessToken.startsWith('$')) {
+      if (glAccessToken.startsWith("$")) {
         console.error(
           `ERROR: CLAUDE_CODE_GL_ACCESS_TOKEN appears to be unexpanded: "${glAccessToken}"`,
         );

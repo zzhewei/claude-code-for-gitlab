@@ -3,7 +3,9 @@
 ## Common Issue: Token Not Expanding in GitLab CI
 
 ### Problem
+
 You see error messages like:
+
 ```
 Using CLAUDE_CODE_GL_ACCESS_TOKEN for GitLab authentication (length: 28)
 Token prefix: $CLAUDE_...
@@ -15,6 +17,7 @@ This means the environment variable is showing as the literal string `$CLAUDE_CO
 ### Solution
 
 1. **Add the variable to GitLab CI/CD settings:**
+
    - Go to your GitLab project
    - Navigate to Settings → CI/CD → Variables
    - Click "Add variable"
@@ -27,6 +30,7 @@ This means the environment variable is showing as the literal string `$CLAUDE_CO
      - Masked: Yes (to hide in logs)
 
 2. **Create a GitLab Personal Access Token:**
+
    - Go to GitLab → User Settings → Access Tokens
    - Create a new token with these scopes:
      - `api` - Full API access
@@ -45,7 +49,8 @@ This means the environment variable is showing as the literal string `$CLAUDE_CO
 
 GitLab supports two authentication header formats:
 
-1. **For Personal Access Tokens (glpat-*) and OAuth tokens (gloas-*):**
+1. **For Personal Access Tokens (glpat-_) and OAuth tokens (gloas-_):**
+
    ```
    Authorization: Bearer <token>
    ```

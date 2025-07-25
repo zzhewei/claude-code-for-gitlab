@@ -339,42 +339,51 @@ export class GitLabProvider implements SCMProvider {
         console.log(
           `Creating issue comment using raw API for project ${this.context.projectId}, issue ${this.context.issueIid}`,
         );
-        console.log(`Token being used: length=${this.options.token.length}, prefix="${this.options.token.substring(0, 10)}..."`);
-        
+        console.log(
+          `Token being used: length=${this.options.token.length}, prefix="${this.options.token.substring(0, 10)}..."`,
+        );
+
         const url = `${this.context.host}/api/v4/projects/${this.context.projectId}/issues/${this.context.issueIid}/notes`;
         console.log(`API URL: ${url}`);
-        
+
         const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         };
-        
+
         // Try both authentication methods
-        if (this.options.token.startsWith('glpat-') || this.options.token.startsWith('gloas-')) {
-          headers['Authorization'] = `Bearer ${this.options.token}`;
-          console.log('Using Bearer token authentication');
+        if (
+          this.options.token.startsWith("glpat-") ||
+          this.options.token.startsWith("gloas-")
+        ) {
+          headers["Authorization"] = `Bearer ${this.options.token}`;
+          console.log("Using Bearer token authentication");
         } else {
-          headers['PRIVATE-TOKEN'] = this.options.token;
-          console.log('Using PRIVATE-TOKEN authentication');
+          headers["PRIVATE-TOKEN"] = this.options.token;
+          console.log("Using PRIVATE-TOKEN authentication");
         }
-        
+
         console.log(`Request headers: ${JSON.stringify(Object.keys(headers))}`);
-        
+
         const response = await fetch(url, {
-          method: 'POST',
+          method: "POST",
           headers,
           body: JSON.stringify({ body }),
         });
-        
+
         console.log(`Response status: ${response.status}`);
-        console.log(`Response headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`);
-        
+        console.log(
+          `Response headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`,
+        );
+
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`API error response: ${errorText}`);
-          throw new Error(`GitLab API error: ${response.status} ${response.statusText} - ${errorText}`);
+          throw new Error(
+            `GitLab API error: ${response.status} ${response.statusText} - ${errorText}`,
+          );
         }
-        
-        note = await response.json() as GitLabNote;
+
+        note = (await response.json()) as GitLabNote;
       } else {
         throw new Error(
           "Cannot create comment without merge request or issue context",

@@ -119,7 +119,7 @@ async function run() {
       let notes: GitLabNote[];
       let resourceType: string;
       let resourceIid: number;
-      
+
       if (mrIid) {
         // Merge request context
         notes = (await api.MergeRequestNotes.all(

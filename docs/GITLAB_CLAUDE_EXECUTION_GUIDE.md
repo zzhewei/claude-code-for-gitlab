@@ -18,6 +18,7 @@ Copy the `gitlab-claude-complete.yml` file to your repository as `.gitlab-ci.yml
 ### Required Variables
 
 1. **CLAUDE_CODE_GL_ACCESS_TOKEN** - Your GitLab Personal Access Token
+
    - Go to GitLab → User Settings → Access Tokens
    - Create token with `api`, `read_repository`, `write_repository` scopes
    - Add to CI/CD variables (Settings → CI/CD → Variables)
@@ -29,6 +30,7 @@ Copy the `gitlab-claude-complete.yml` file to your repository as `.gitlab-ci.yml
 ### Webhook Variables (Set by webhook server)
 
 These are automatically set when using the webhook server:
+
 - `CLAUDE_TRIGGER` - Set to "true" to trigger the job
 - `CLAUDE_RESOURCE_TYPE` - Either "issue" or "merge_request"
 - `CLAUDE_RESOURCE_ID` - The issue/MR IID
@@ -44,6 +46,7 @@ These are automatically set when using the webhook server:
 ## Example Output
 
 When working correctly, you'll see:
+
 1. Initial comment: "🤖 Claude is working on this..."
 2. Claude executes and makes changes
 3. Comment updates to: "✅ Claude's work is complete" with execution details
@@ -51,6 +54,7 @@ When working correctly, you'll see:
 ## Troubleshooting
 
 If Claude doesn't run:
+
 1. Check that `CLAUDE_CODE_GL_ACCESS_TOKEN` is set in CI/CD variables
 2. Verify the token has proper scopes
 3. Check job logs for environment variable debug output
