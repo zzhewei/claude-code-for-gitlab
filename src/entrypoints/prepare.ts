@@ -169,14 +169,16 @@ async function runGitLab() {
     console.log("Step 4: Checking write permissions...");
     const context = provider.getContext();
     console.log(`Checking permissions for actor: ${context.actor}`);
-    
+
     let hasWritePermissions: boolean;
     try {
       hasWritePermissions = await provider.hasWritePermission(context.actor);
       console.log(`Write permissions check result: ${hasWritePermissions}`);
     } catch (error) {
       console.error("Error checking write permissions:", error);
-      throw new Error(`Failed to check write permissions: ${error instanceof Error ? error.message : error}`);
+      throw new Error(
+        `Failed to check write permissions: ${error instanceof Error ? error.message : error}`,
+      );
     }
 
     if (!hasWritePermissions) {
@@ -189,11 +191,16 @@ async function runGitLab() {
     console.log("Step 5: Checking trigger conditions...");
     let containsTrigger: boolean;
     try {
-      containsTrigger = await provider.checkTrigger(triggerPhrase, directPrompt);
+      containsTrigger = await provider.checkTrigger(
+        triggerPhrase,
+        directPrompt,
+      );
       console.log(`Trigger check result: ${containsTrigger}`);
     } catch (error) {
       console.error("Error checking trigger:", error);
-      throw new Error(`Failed to check trigger: ${error instanceof Error ? error.message : error}`);
+      throw new Error(
+        `Failed to check trigger: ${error instanceof Error ? error.message : error}`,
+      );
     }
 
     if (!containsTrigger) {
@@ -210,13 +217,17 @@ async function runGitLab() {
         console.log(`Human actor check result: ${isHuman}`);
       } catch (error) {
         console.error("Error checking human actor:", error);
-        throw new Error(`Failed to check human actor: ${error instanceof Error ? error.message : error}`);
+        throw new Error(
+          `Failed to check human actor: ${error instanceof Error ? error.message : error}`,
+        );
       }
       if (!isHuman) {
         throw new Error("Actor is not a human user");
       }
     } else {
-      console.log("Step 6: Skipping human actor check (direct prompt provided)");
+      console.log(
+        "Step 6: Skipping human actor check (direct prompt provided)",
+      );
     }
 
     // Step 7: Create initial tracking comment
@@ -238,7 +249,9 @@ async function runGitLab() {
       console.log(`Created comment with ID: ${commentId}`);
     } catch (error) {
       console.error("Error creating comment:", error);
-      throw new Error(`Failed to create comment: ${error instanceof Error ? error.message : error}`);
+      throw new Error(
+        `Failed to create comment: ${error instanceof Error ? error.message : error}`,
+      );
     }
 
     // Output comment ID for later use
@@ -263,7 +276,9 @@ async function runGitLab() {
       console.log("Git authentication configured successfully");
     } catch (error) {
       console.error("Error configuring git auth:", error);
-      throw new Error(`Failed to configure git auth: ${error instanceof Error ? error.message : error}`);
+      throw new Error(
+        `Failed to configure git auth: ${error instanceof Error ? error.message : error}`,
+      );
     }
 
     // Fetch context data
@@ -274,7 +289,9 @@ async function runGitLab() {
       console.log("Context data fetched successfully");
     } catch (error) {
       console.error("Error fetching context data:", error);
-      throw new Error(`Failed to fetch context data: ${error instanceof Error ? error.message : error}`);
+      throw new Error(
+        `Failed to fetch context data: ${error instanceof Error ? error.message : error}`,
+      );
     }
 
     // Create prompt directory

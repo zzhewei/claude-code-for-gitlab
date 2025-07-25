@@ -22,7 +22,10 @@ import {
   type ParsedGitLabContext,
 } from "../gitlab/context";
 import { checkGitLabTriggerAction } from "../gitlab/validation/trigger";
-import { fetchGitLabMRData, fetchGitLabIssueData } from "../gitlab/data/fetcher";
+import {
+  fetchGitLabMRData,
+  fetchGitLabIssueData,
+} from "../gitlab/data/fetcher";
 import type {
   GitLabUser,
   GitLabMergeRequest,
@@ -79,9 +82,9 @@ export class GitLabProvider implements SCMProvider {
     const webhook = parseGitLabWebhookPayload();
     const isMR =
       !!this.context.mrIid || webhook?.object_kind === "merge_request";
-    const entityNumber = this.context.mrIid 
-      ? parseInt(this.context.mrIid) 
-      : this.context.issueIid 
+    const entityNumber = this.context.mrIid
+      ? parseInt(this.context.mrIid)
+      : this.context.issueIid
         ? parseInt(this.context.issueIid)
         : 0;
 
@@ -118,7 +121,7 @@ export class GitLabProvider implements SCMProvider {
       const users = (await this.api.Users.all({
         username,
       })) as unknown as GitLabUser[];
-      
+
       if (users.length === 0) {
         console.log(`User '${username}' not found on GitLab instance.`);
         return false;
@@ -132,7 +135,9 @@ export class GitLabProvider implements SCMProvider {
 
       // 2. Use direct API call to check member including inherited permissions
       try {
-        console.log(`Checking membership for project ${this.context.projectId} and user ${userId}`);
+        console.log(
+          `Checking membership for project ${this.context.projectId} and user ${userId}`,
+        );
         // GitLab API endpoint: /projects/:id/members/all/:user_id
         const member = (await (this.api as any).requester.get(
           `/projects/${this.context.projectId}/members/all/${userId}`,
@@ -143,7 +148,9 @@ export class GitLabProvider implements SCMProvider {
       } catch (error: any) {
         console.error(`Error checking project membership:`, error);
         if ((error as any).response?.status === 404) {
-          console.log("User is not a member (direct or inherited) - 404 response");
+          console.log(
+            "User is not a member (direct or inherited) - 404 response",
+          );
           return false;
         }
         throw error;
@@ -160,7 +167,7 @@ export class GitLabProvider implements SCMProvider {
       const users = (await this.api.Users.all({
         username,
       })) as unknown as GitLabUser[];
-      
+
       if (users.length === 0) {
         console.log(`User '${username}' not found for human check`);
         return false; // User not found
@@ -169,7 +176,8 @@ export class GitLabProvider implements SCMProvider {
       console.log(`User type: ${user?.user_type}, state: ${user?.state}`);
       // In GitLab, bot users have user_type 'project_bot' or similar
       // The `bot` property is a GitLab v16.0+ feature
-      const isHuman = user?.user_type !== "project_bot" && user?.state === "active";
+      const isHuman =
+        user?.user_type !== "project_bot" && user?.state === "active";
       console.log(`Human check result: ${isHuman}`);
       return isHuman;
     } catch (error) {
@@ -254,7 +262,7 @@ export class GitLabProvider implements SCMProvider {
 
   async createComment(body: string): Promise<number> {
     let note: GitLabNote;
-    
+
     if (this.context.mrIid) {
       // Create comment on merge request
       note = (await this.api.MergeRequestNotes.create(
@@ -270,7 +278,9 @@ export class GitLabProvider implements SCMProvider {
         body,
       )) as unknown as GitLabNote;
     } else {
-      throw new Error("Cannot create comment without merge request or issue context");
+      throw new Error(
+        "Cannot create comment without merge request or issue context",
+      );
     }
 
     return note.id;
@@ -294,7 +304,9 @@ export class GitLabProvider implements SCMProvider {
         { body },
       );
     } else {
-      throw new Error("Cannot update comment without merge request or issue context");
+      throw new Error(
+        "Cannot update comment without merge request or issue context",
+      );
     }
   }
 
@@ -522,7 +534,11 @@ ${s.suggestion}
     }
 
     if (this.context.issueIid) {
-      return fetchGitLabIssueData(this.options.token, this.context, this.context.issueIid);
+      return fetchGitLabIssueData(
+        this.options.token,
+        this.context,
+        this.context.issueIid,
+      );
     }
 
     // Return basic context if not in MR or Issue
