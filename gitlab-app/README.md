@@ -115,6 +115,7 @@ docker run -d \
 - `RATE_LIMIT_WINDOW`: Time window in seconds (default: 900)
 - `CANCEL_OLD_PIPELINES`: Cancel older pending pipelines (default: true)
 - `ADMIN_TOKEN`: Optional admin token for /admin endpoints
+- `TRIGGER_PHRASE`: Custom trigger phrase instead of @claude (default: @claude)
 
 ## Pipeline Variables
 
@@ -125,6 +126,8 @@ When a pipeline is triggered, these variables are available:
 - `CLAUDE_RESOURCE_TYPE`: "merge_request" or "issue"
 - `CLAUDE_RESOURCE_ID`: MR/Issue IID
 - `CLAUDE_NOTE`: The full comment text
+- `TRIGGER_PHRASE`: The trigger phrase used (e.g., "@claude")
+- `DIRECT_PROMPT`: The text after the trigger phrase
 - `CLAUDE_PROJECT_PATH`: Project path with namespace
 
 ## Admin Endpoints

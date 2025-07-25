@@ -98,9 +98,16 @@ app.post("/webhook", async (c) => {
   const issueTitle = body.issue?.title;
   const authorUsername = body.user?.username;
 
-  // Check for @claude mention
-  if (!/@claude\b/i.test(note)) {
-    logger.debug("No @claude mention found in note");
+  // Get trigger phrase from environment or use default
+  const triggerPhrase = process.env.TRIGGER_PHRASE || "@claude";
+  const triggerRegex = new RegExp(
+    `${triggerPhrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
+    "i",
+  );
+
+  // Check for trigger phrase mention
+  if (!triggerRegex.test(note)) {
+    logger.debug(`No ${triggerPhrase} mention found in note`);
     return c.text("skipped");
   }
 
@@ -118,7 +125,7 @@ app.post("/webhook", async (c) => {
     return c.text("rate-limited", 429);
   }
 
-  logger.info(`@claude triggered`, {
+  logger.info(`${triggerPhrase} triggered`, {
     project: projectPath,
     author: authorUsername,
     resourceType: mrIid ? "merge_request" : issueIid ? "issue" : "unknown",
@@ -173,6 +180,15 @@ app.post("/webhook", async (c) => {
   // Default to main if no ref determined
   ref = ref || "main";
 
+  // Extract the prompt after the trigger phrase
+  const promptMatch = note.match(
+    new RegExp(
+      `${triggerPhrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s+(.*)`,
+      "is",
+    ),
+  );
+  const directPrompt = promptMatch ? promptMatch[1].trim() : "";
+
   // Trigger pipeline with variables
   const variables = {
     CLAUDE_TRIGGER: "true",
@@ -182,6 +198,8 @@ app.post("/webhook", async (c) => {
     CLAUDE_NOTE: note,
     CLAUDE_PROJECT_PATH: projectPath,
     CLAUDE_BRANCH: ref,
+    TRIGGER_PHRASE: triggerPhrase,
+    DIRECT_PROMPT: directPrompt,
   };
 
   logger.info("Triggering pipeline", {
