@@ -28,12 +28,15 @@ import { $ } from "bun";
 
 async function run() {
   const platform = detectPlatform();
-  core.setOutput("platform", platform);
-
+  
   // Use platform-specific logic
   if (platform === "gitlab") {
+    // GitLab mode - output platform using echo
+    console.log(`platform=${platform}`);
     await runGitLab();
   } else {
+    // GitHub mode - use core.setOutput
+    core.setOutput("platform", platform);
     await runGitHub();
   }
 }
@@ -150,12 +153,9 @@ async function runGitLab() {
     const token = getToken();
 
     // Step 2: Get trigger configuration
-    const triggerPhrase =
-      core.getInput("trigger_phrase") ||
-      process.env.TRIGGER_PHRASE ||
-      "@claude";
-    const directPrompt =
-      core.getInput("direct_prompt") || process.env.DIRECT_PROMPT || "";
+    // In GitLab CI, we only use environment variables
+    const triggerPhrase = process.env.TRIGGER_PHRASE || "@claude";
+    const directPrompt = process.env.DIRECT_PROMPT || "";
 
     // Step 3: Create provider instance
     provider = createProvider({
@@ -313,13 +313,13 @@ ${directPrompt || "Please help with the requested task."}`;
     console.log("✅ Created prompt file for Claude");
 
     // GitLab doesn't need MCP config for now
-    core.setOutput("mcp_config", "");
+    console.log("mcp_config=");
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    core.setFailed(`Prepare step failed with error: ${errorMessage}`);
-
-    // Also output the clean error message for the action to capture
-    core.setOutput("prepare_error", errorMessage);
+    console.error(`Prepare step failed with error: ${errorMessage}`);
+    
+    // Output error for GitLab CI
+    console.log(`prepare_error=${errorMessage}`);
 
     // Try to update comment with error if we have a provider and comment ID
     if (provider && process.env.CLAUDE_COMMENT_ID) {
