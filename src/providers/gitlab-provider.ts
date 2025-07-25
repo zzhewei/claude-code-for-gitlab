@@ -91,6 +91,19 @@ export class GitLabProvider implements SCMProvider {
   }
 
   async hasWritePermission(username: string): Promise<boolean> {
+    // Skip permission checks if CC_SKIP_PRE_CHECK is set
+    if (process.env.CC_SKIP_PRE_CHECK === "1") {
+      console.log("Skipping permission check due to CC_SKIP_PRE_CHECK=1");
+      return true;
+    }
+
+    // When using access tokens, we don't validate against specific usernames
+    // Access tokens already have their own permissions
+    if (process.env.CLAUDE_CODE_GL_ACCESS_TOKEN) {
+      console.log("Using GitLab access token - skipping username validation");
+      return true;
+    }
+
     if (!username) {
       return false;
     }

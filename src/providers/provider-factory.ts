@@ -116,7 +116,16 @@ export function getToken(): string {
   const platform = detectPlatform();
 
   if (platform === "gitlab") {
-    // Check for OAuth token first (new method)
+    // Check for GitLab access token first (highest priority)
+    const glAccessToken = process.env.CLAUDE_CODE_GL_ACCESS_TOKEN;
+    if (glAccessToken) {
+      console.log(
+        "Using CLAUDE_CODE_GL_ACCESS_TOKEN for GitLab authentication",
+      );
+      return glAccessToken;
+    }
+
+    // Check for OAuth token (new method)
     const oauthToken =
       process.env.CLAUDE_CODE_OAUTH_TOKEN ||
       core.getInput("claude_code_oauth_token");
@@ -129,7 +138,7 @@ export function getToken(): string {
     const token = process.env.GITLAB_TOKEN || core.getInput("gitlab_token");
     if (!token) {
       throw new Error(
-        "GitLab authentication required (CLAUDE_CODE_OAUTH_TOKEN, GITLAB_TOKEN, or gitlab_token input)",
+        "GitLab authentication required (CLAUDE_CODE_GL_ACCESS_TOKEN, CLAUDE_CODE_OAUTH_TOKEN, GITLAB_TOKEN, or gitlab_token input)",
       );
     }
     return token;
