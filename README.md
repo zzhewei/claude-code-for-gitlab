@@ -39,7 +39,7 @@ A GitLab-specific implementation of [Claude Code](https://claude.ai/code) that b
 
 ## GitLab Quick Start
 
-### Option 1: Webhook Service (Recommended)
+### Step 1: Deploy Webhook Service
 
 Deploy the webhook service for real-time responses to GitLab mentions:
 
@@ -56,7 +56,7 @@ docker run -d \
 
 Then configure webhooks in your GitLab project settings. See the [GitLab App Setup Guide](./docs/GITLAB_APP_SETUP.md) for detailed instructions.
 
-### Option 2: GitLab CI/CD Pipeline
+### Step 2: Configure GitLab CI/CD
 
 Add to your `.gitlab-ci.yml`:
 
