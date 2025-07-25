@@ -66,6 +66,10 @@ export class GitLabProvider implements SCMProvider {
       token: options.token,
     });
 
+    console.log(
+      `GitLab API initialized with token length: ${options.token.length}`,
+    );
+
     // Test token validity on initialization (skip in test environments)
     if (process.env.NODE_ENV !== "test" && !process.env.BUN_TEST) {
       this.validateToken().catch((error) => {
@@ -80,7 +84,8 @@ export class GitLabProvider implements SCMProvider {
   private async validateToken(): Promise<void> {
     try {
       console.log("Testing token validity...");
-      const user = await this.api.Users.current();
+      // Use 'me' to get current user in @gitbeaker
+      const user = await this.api.Users.show("me");
       console.log(
         `Token is valid. Authenticated as: ${user.username} (${user.name})`,
       );
@@ -356,10 +361,11 @@ export class GitLabProvider implements SCMProvider {
           }
         }
 
+        // @gitbeaker expects the note body in an options object
         note = (await this.api.IssueNotes.create(
           this.context.projectId,
           parseInt(this.context.issueIid),
-          body,
+          { body },
         )) as unknown as GitLabNote;
       } else {
         throw new Error(
