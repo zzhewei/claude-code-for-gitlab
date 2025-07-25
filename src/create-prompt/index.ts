@@ -2,6 +2,7 @@
 
 import * as core from "@actions/core";
 import { writeFile, mkdir } from "fs/promises";
+import { getClaudePromptsDirectory } from "../utils/temp-directory";
 import type { FetchDataResult } from "../github/data/fetcher";
 import {
   formatContext,
@@ -814,9 +815,7 @@ export async function createPrompt(
       modeContext.claudeBranch,
     );
 
-    await mkdir(`${process.env.RUNNER_TEMP}/claude-prompts`, {
-      recursive: true,
-    });
+    const promptsDir = getClaudePromptsDirectory();
 
     // Generate the prompt directly
     const promptContent = generatePrompt(
@@ -832,7 +831,7 @@ export async function createPrompt(
 
     // Write the prompt file
     await writeFile(
-      `${process.env.RUNNER_TEMP}/claude-prompts/claude-prompt.txt`,
+      `${promptsDir}/claude-prompt.txt`,
       promptContent,
     );
 

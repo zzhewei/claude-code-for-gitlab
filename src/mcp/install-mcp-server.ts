@@ -2,6 +2,7 @@ import * as core from "@actions/core";
 import { GITHUB_API_URL } from "../github/api/config";
 import type { ParsedGitHubContext } from "../github/context";
 import { Octokit } from "@octokit/rest";
+import { getTempDirectory } from "../utils/temp-directory";
 
 type PrepareConfigParams = {
   githubToken: string;
@@ -142,7 +143,7 @@ export async function prepareMcpConfig(
           REPO_OWNER: owner,
           REPO_NAME: repo,
           PR_NUMBER: context.entityNumber.toString(),
-          RUNNER_TEMP: process.env.RUNNER_TEMP || "/tmp",
+          RUNNER_TEMP: getTempDirectory(),
         },
       };
     }

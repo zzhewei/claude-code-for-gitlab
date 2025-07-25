@@ -159,7 +159,7 @@ async function runUpdatePhase(prepareResult: PhaseResult, executeResult: PhaseRe
       CLAUDE_COMMENT_ID: prepareResult.commentId.toString(),
       CLAUDE_SUCCESS: executeResult.success ? "true" : "false",
       PREPARE_SUCCESS: prepareResult.success ? "true" : "false",
-      OUTPUT_FILE: executeResult.outputFile || "/tmp/claude-output.json",
+      OUTPUT_FILE: executeResult.outputFile || getClaudeExecutionOutputPath(),
     };
 
     // If we're in issue context, ensure CI_ISSUE_IID is set

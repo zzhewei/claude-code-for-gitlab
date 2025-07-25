@@ -6,12 +6,13 @@ import { z } from "zod";
 import { GITHUB_API_URL } from "../github/api/config";
 import { mkdir, writeFile } from "fs/promises";
 import { Octokit } from "@octokit/rest";
+import { getTempDirectory, getGitHubCILogsDirectory } from "../utils/temp-directory";
 
 const REPO_OWNER = process.env.REPO_OWNER;
 const REPO_NAME = process.env.REPO_NAME;
 const PR_NUMBER = process.env.PR_NUMBER;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const RUNNER_TEMP = process.env.RUNNER_TEMP || "/tmp";
+const RUNNER_TEMP = getTempDirectory();
 
 if (!REPO_OWNER || !REPO_NAME || !PR_NUMBER || !GITHUB_TOKEN) {
   console.error(
@@ -223,7 +224,7 @@ server.tool(
 
       const logsText = response.data as unknown as string;
 
-      const logsDir = `${RUNNER_TEMP}/github-ci-logs`;
+      const logsDir = getGitHubCILogsDirectory();
       await mkdir(logsDir, { recursive: true });
 
       const logPath = `${logsDir}/job-${job_id}.log`;

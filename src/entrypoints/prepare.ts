@@ -25,6 +25,7 @@ import {
 } from "../providers/provider-factory";
 import type { SCMProvider } from "../providers/scm-provider";
 import { $ } from "bun";
+import { getClaudePromptsDirectory } from "../utils/temp-directory";
 
 async function run() {
   const platform = detectPlatform();
@@ -324,8 +325,7 @@ async function runGitLab() {
     }
 
     // Create prompt directory
-    const promptDir = "/tmp/claude-prompts";
-    await $`mkdir -p ${promptDir}`.quiet();
+    const promptDir = getClaudePromptsDirectory();
 
     // Generate prompt based on context
     let prompt = "";
