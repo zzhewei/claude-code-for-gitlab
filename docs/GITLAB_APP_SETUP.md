@@ -400,3 +400,10 @@ For issues specific to:
 - **GitLab application setup**: Check GitLab documentation or GitLab support
 - **Claude Code integration**: Open an issue in this repository
 - **Self-hosted configurations**: Review your GitLab instance logs and network configuration
+
+## Additional Documentation
+
+- [GitLab Token Troubleshooting Guide](./GITLAB_TOKEN_TROUBLESHOOTING.md) - Comprehensive guide for resolving authentication issues
+- [GitLab Claude Execution Guide](./GITLAB_CLAUDE_EXECUTION_GUIDE.md) - Details on how Claude executes in GitLab CI/CD pipelines
+- [GitLab Unified Entrypoint](./GITLAB_UNIFIED_ENTRYPOINT.md) - Technical details on the unified TypeScript entrypoint
+- [GitLab MR Creation and Response Posting](./GITLAB_MR_CREATION.md) - How Claude creates MRs or posts responses based on changes
