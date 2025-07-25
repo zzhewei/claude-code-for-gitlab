@@ -11,6 +11,7 @@ import {
 import { limitByUser } from "./limiter";
 import { logger } from "./logger";
 import type { WebhookPayload } from "./types";
+import { sendPipelineNotification, sendRateLimitNotification } from "./discord";
 
 const app = new Hono();
 
@@ -122,6 +123,15 @@ app.post("/webhook", async (c) => {
 
   if (!(await limitByUser(key))) {
     logger.warn("Rate limit exceeded", { key, author: authorUsername });
+    
+    // Send Discord notification for rate limit
+    sendRateLimitNotification(
+      projectPath,
+      authorUsername,
+      mrIid ? "merge_request" : issueIid ? "issue" : "unknown",
+      String(mrIid || issueIid || ""),
+    );
+    
     return c.text("rate-limited", 429);
   }
 
@@ -200,6 +210,7 @@ app.post("/webhook", async (c) => {
     CLAUDE_BRANCH: ref,
     TRIGGER_PHRASE: triggerPhrase,
     DIRECT_PROMPT: directPrompt,
+    GITLAB_WEBHOOK_PAYLOAD: JSON.stringify(body),
   };
 
   logger.info("Triggering pipeline", {
@@ -215,6 +226,20 @@ app.post("/webhook", async (c) => {
       pipelineId,
       projectId,
       ref,
+    });
+
+    // Send Discord notification (fire-and-forget)
+    sendPipelineNotification({
+      projectPath,
+      authorUsername,
+      resourceType: mrIid ? "merge_request" : issueIid ? "issue" : "unknown",
+      resourceId: String(mrIid || issueIid || ""),
+      branch: ref,
+      pipelineId,
+      gitlabUrl: process.env.GITLAB_URL || "https://gitlab.com",
+      triggerPhrase,
+      directPrompt,
+      issueTitle: issueTitle || undefined,
     });
 
     // Cancel old pipelines if configured

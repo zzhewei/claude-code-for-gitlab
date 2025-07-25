@@ -10,6 +10,7 @@ A lightweight webhook server that listens for `@claude` mentions in GitLab issue
 - Works with personal access tokens (no OAuth required)
 - Minimal dependencies (Hono + Redis)
 - Docker-ready deployment
+- Optional Discord notifications for pipeline triggers and rate limits
 
 ## Quick Start
 
@@ -116,6 +117,7 @@ docker run -d \
 - `CANCEL_OLD_PIPELINES`: Cancel older pending pipelines (default: true)
 - `ADMIN_TOKEN`: Optional admin token for /admin endpoints
 - `TRIGGER_PHRASE`: Custom trigger phrase instead of @claude (default: @claude)
+- `DISCORD_WEBHOOK_URL`: Optional Discord webhook URL for notifications
 
 ## Pipeline Variables
 
@@ -135,6 +137,19 @@ When a pipeline is triggered, these variables are available:
 - `GET /health` - Health check
 - `GET /admin/disable` - Disable bot (requires Bearer token)
 - `GET /admin/enable` - Enable bot (requires Bearer token)
+
+## Discord Notifications
+
+When configured with a Discord webhook URL, the bot will send notifications for:
+
+- **Pipeline Triggers**: Rich embed with project info, author, resource details, branch, pipeline ID, and direct prompt
+- **Rate Limit Events**: Alerts when users hit the rate limit
+
+To enable Discord notifications:
+
+1. Create a Discord webhook in your server settings
+2. Set the `DISCORD_WEBHOOK_URL` environment variable
+3. Notifications will be sent automatically (fire-and-forget)
 
 ## Development
 
