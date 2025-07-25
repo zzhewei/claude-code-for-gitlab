@@ -94,11 +94,29 @@ async function runExecutePhase(prepareResult: PhaseResult): Promise<PhaseResult>
     console.log("Phase 4: Running Claude Code...");
     console.log("=========================================");
 
+    // Check if prompt file exists and read its content
+    const promptPath = `${getClaudePromptsDirectory()}/claude-prompt.txt`;
+    let promptContent = "";
+    try {
+      const fs = await import("fs");
+      promptContent = await fs.promises.readFile(promptPath, "utf-8");
+      console.log(`Prompt file loaded, size: ${promptContent.length} characters`);
+      
+      // Debug: Show first 500 chars of prompt
+      if (promptContent.length > 0) {
+        console.log("Prompt preview (first 500 chars):");
+        console.log(promptContent.substring(0, 500));
+        console.log("...");
+      }
+    } catch (error) {
+      console.error("Failed to read prompt file:", error);
+    }
+
     // Set up environment for base-action
     const env = {
       ...process.env,
       CLAUDE_CODE_ACTION: "1",
-      INPUT_PROMPT_FILE: `${getClaudePromptsDirectory()}/claude-prompt.txt`,
+      INPUT_PROMPT_FILE: promptPath,
       INPUT_TIMEOUT_MINUTES: "30",
       INPUT_MCP_CONFIG: "",
       INPUT_SETTINGS: "",

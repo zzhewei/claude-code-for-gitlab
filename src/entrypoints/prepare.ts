@@ -25,6 +25,7 @@ import {
 } from "../providers/provider-factory";
 import type { SCMProvider } from "../providers/scm-provider";
 import { getClaudePromptsDirectory } from "../utils/temp-directory";
+import { parseGitLabWebhookPayload } from "../gitlab/webhook";
 
 async function run() {
   const platform = detectPlatform();
@@ -316,6 +317,12 @@ async function runGitLab() {
     try {
       contextData = await provider.fetchContextData();
       console.log("Context data fetched successfully");
+      console.log("Context data type:", {
+        hasIid: !!contextData.iid,
+        hasTitle: !!contextData.title,
+        hasProjectId: !!contextData.projectId,
+        contextKeys: Object.keys(contextData),
+      });
     } catch (error) {
       console.error("Error fetching context data:", error);
       throw new Error(
@@ -325,6 +332,28 @@ async function runGitLab() {
 
     // Create prompt directory
     const promptDir = getClaudePromptsDirectory();
+
+    // Extract trigger comment from webhook payload
+    let triggerComment = "";
+    const webhookPayload = parseGitLabWebhookPayload();
+    if (webhookPayload?.object_kind === "note") {
+      triggerComment = webhookPayload.object_attributes?.note || "";
+      console.log("Found trigger comment from webhook:", triggerComment);
+    } else if (webhookPayload?.object_kind === "issue") {
+      // For issue events, the trigger might be in the description
+      const issue = webhookPayload.issue || webhookPayload.object_attributes;
+      if (issue?.description) {
+        triggerComment = issue.description;
+        console.log("Found trigger in issue description:", triggerComment);
+      }
+    } else if (webhookPayload?.object_kind === "merge_request") {
+      // For MR events, check description
+      const mr = webhookPayload.merge_request || webhookPayload.object_attributes;
+      if (mr?.description) {
+        triggerComment = mr.description;
+        console.log("Found trigger in MR description:", triggerComment);
+      }
+    }
 
     // Generate prompt based on context
     let prompt = "";
@@ -379,20 +408,63 @@ ${note.body}
 
 ## Your Task
 
+${triggerComment ? `The user mentioned you with: "${triggerComment}"` : ""}
+
 ${directPrompt || "Please analyze this merge request and provide feedback on code quality, potential issues, and suggestions for improvement."}
 
 When providing feedback, be specific and reference exact line numbers and file paths.`;
+    } else if (context.issueIid && contextData.iid) {
+      // Issue context
+      prompt = `You are Claude, an AI assistant helping with GitLab issues.
+
+## Issue Context
+
+**Title:** ${contextData.title}
+**Description:** ${contextData.description || "No description provided"}
+**State:** ${contextData.state}
+**Author:** ${contextData.author.name} (@${contextData.author.username})
+**Web URL:** ${contextData.webUrl}
+**Labels:** ${contextData.labels?.join(", ") || "None"}
+
+## Existing Comments/Discussions
+
+${
+  contextData.discussions?.length > 0
+    ? contextData.discussions
+        .map((discussion: any) =>
+          discussion.notes
+            .map(
+              (note: any) => `
+**${note.author.name}** (${note.created_at}):
+${note.body}
+`,
+            )
+            .join("\n"),
+        )
+        .join("\n---\n")
+    : "No existing comments"
+}
+
+## Your Task
+
+${triggerComment ? `The user mentioned you with: "${triggerComment}"` : ""}
+
+${directPrompt || "Please analyze this issue and help with the requested task."}
+
+When providing assistance, be specific and reference the issue context.`;
     } else {
-      // Issue or manual trigger context
+      // Manual trigger or webhook without specific context
       prompt = `You are Claude, an AI assistant helping with GitLab projects.
 
 ## Project Context
 
-**Project ID:** ${contextData.projectId}
-**Host:** ${contextData.host}
-**User:** ${contextData.userName}
+**Project ID:** ${contextData.projectId || context.projectId}
+**Host:** ${contextData.host || context.host}
+**User:** ${contextData.userName || context.userName}
 
 ## Your Task
+
+${triggerComment ? `The user mentioned you with: "${triggerComment}"` : ""}
 
 ${directPrompt || "Please help with the requested task."}`;
     }
@@ -401,6 +473,12 @@ ${directPrompt || "Please help with the requested task."}`;
     const fs = await import("fs");
     await fs.promises.writeFile(`${promptDir}/claude-prompt.txt`, prompt);
     console.log("✅ Created prompt file for Claude");
+    console.log(`Prompt file size: ${prompt.length} bytes`);
+    console.log("Prompt preview (first 500 chars):");
+    console.log(prompt.substring(0, 500));
+    if (prompt.length > 500) {
+      console.log("... (truncated)")
+    }
 
     // GitLab doesn't need MCP config for now
     console.log("mcp_config=");

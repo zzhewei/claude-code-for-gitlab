@@ -59,6 +59,7 @@ export function createProvider(options: ProviderFactoryOptions): SCMProvider {
       // Get GitLab-specific configuration
       const projectId = process.env.CI_PROJECT_ID;
       const mrIid = process.env.CI_MERGE_REQUEST_IID;
+      const issueIid = process.env.CLAUDE_RESOURCE_ID;
       const host = process.env.CI_SERVER_URL || "https://gitlab.com";
       const pipelineUrl = process.env.CI_PIPELINE_URL;
 
@@ -70,6 +71,7 @@ export function createProvider(options: ProviderFactoryOptions): SCMProvider {
         token: options.token,
         projectId,
         mrIid,
+        issueIid,
         host,
         pipelineUrl,
         triggerPhrase: options.triggerPhrase,
