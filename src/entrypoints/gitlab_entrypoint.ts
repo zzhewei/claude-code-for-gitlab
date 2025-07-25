@@ -51,10 +51,14 @@ async function runPreparePhase(): Promise<PhaseResult> {
       };
     }
 
-    // Extract comment ID from environment (set by prepare.ts)
-    const commentId = process.env.CLAUDE_COMMENT_ID
-      ? parseInt(process.env.CLAUDE_COMMENT_ID)
-      : undefined;
+    // Extract comment ID from the output
+    // Look for a line like "::set-output name=comment_id::12345"
+    let commentId: number | undefined;
+    const commentIdMatch = output.match(/::set-output name=comment_id::(\d+)/);
+    if (commentIdMatch && commentIdMatch[1]) {
+      commentId = parseInt(commentIdMatch[1]);
+      console.log(`Extracted comment ID: ${commentId}`);
+    }
 
     return {
       success: true,
@@ -181,6 +185,17 @@ async function runExecutePhase(
 
 async function checkGitStatus(): Promise<boolean> {
   try {
+    // Clean up any temporary output files before checking git status
+    // These files might be created by Claude Code during execution
+    const tempFiles = ["output.txt", "*.log", "*.tmp"];
+    for (const pattern of tempFiles) {
+      try {
+        await $`rm -f ${pattern}`.quiet();
+      } catch {
+        // Ignore errors if files don't exist
+      }
+    }
+
     const result = await $`git status --porcelain`.quiet();
     return result.stdout.toString().trim().length > 0;
   } catch (error) {
