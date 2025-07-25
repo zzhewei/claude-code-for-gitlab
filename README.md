@@ -2,6 +2,8 @@
 
 # Claude Code Action
 
+> **📚 GitLab Users**: See the [GitLab Setup Guide](./docs/GITLAB_APP_SETUP.md) for GitLab-specific setup instructions and the [GitLab Token Troubleshooting Guide](./docs/GITLAB_TOKEN_TROUBLESHOOTING.md) if you encounter authentication issues.
+
 A general-purpose [Claude Code](https://claude.ai/code) action for GitHub PRs and issues that can answer questions and implement code changes. This action listens for a trigger phrase in comments and activates Claude act on the request. It supports multiple authentication methods including Anthropic direct API, Amazon Bedrock, and Google Vertex AI.
 
 ## Features

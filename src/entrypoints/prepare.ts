@@ -29,6 +29,31 @@ import { $ } from "bun";
 async function run() {
   const platform = detectPlatform();
 
+  // Debug environment variables related to authentication
+  if (platform === "gitlab") {
+    console.log("=== GitLab Environment Variables Debug ===");
+    const authVars = [
+      'CLAUDE_CODE_GL_ACCESS_TOKEN',
+      'CLAUDE_CODE_OAUTH_TOKEN',
+      'GITLAB_TOKEN',
+      'CI_JOB_TOKEN',
+    ];
+    
+    authVars.forEach(varName => {
+      const value = process.env[varName];
+      if (value) {
+        if (value.startsWith('$')) {
+          console.log(`${varName}: UNEXPANDED ("${value}") - Variable not set in CI/CD settings!`);
+        } else {
+          console.log(`${varName}: Set (length: ${value.length}, prefix: "${value.substring(0, 8)}...")`);
+        }
+      } else {
+        console.log(`${varName}: Not set`);
+      }
+    });
+    console.log("=========================================");
+  }
+
   // Use platform-specific logic
   if (platform === "gitlab") {
     // GitLab mode - output platform using echo

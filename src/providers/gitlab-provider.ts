@@ -325,7 +325,7 @@ export class GitLabProvider implements SCMProvider {
 
     try {
       if (this.context.mrIid) {
-        // Create comment on merge request
+        // Create comment on merge request using @gitbeaker
         console.log(
           `Creating MR comment for project ${this.context.projectId}, MR ${this.context.mrIid}`,
         );
@@ -335,17 +335,46 @@ export class GitLabProvider implements SCMProvider {
           body,
         )) as unknown as GitLabNote;
       } else if (this.context.issueIid) {
-        // Create comment on issue
+        // Create comment on issue using raw fetch API for better control
         console.log(
-          `Creating issue comment for project ${this.context.projectId}, issue ${this.context.issueIid}`,
+          `Creating issue comment using raw API for project ${this.context.projectId}, issue ${this.context.issueIid}`,
         );
-
-        // @gitbeaker expects the note body as a string parameter
-        note = (await this.api.IssueNotes.create(
-          this.context.projectId,
-          parseInt(this.context.issueIid),
-          body,
-        )) as unknown as GitLabNote;
+        console.log(`Token being used: length=${this.options.token.length}, prefix="${this.options.token.substring(0, 10)}..."`);
+        
+        const url = `${this.context.host}/api/v4/projects/${this.context.projectId}/issues/${this.context.issueIid}/notes`;
+        console.log(`API URL: ${url}`);
+        
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        
+        // Try both authentication methods
+        if (this.options.token.startsWith('glpat-') || this.options.token.startsWith('gloas-')) {
+          headers['Authorization'] = `Bearer ${this.options.token}`;
+          console.log('Using Bearer token authentication');
+        } else {
+          headers['PRIVATE-TOKEN'] = this.options.token;
+          console.log('Using PRIVATE-TOKEN authentication');
+        }
+        
+        console.log(`Request headers: ${JSON.stringify(Object.keys(headers))}`);
+        
+        const response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ body }),
+        });
+        
+        console.log(`Response status: ${response.status}`);
+        console.log(`Response headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`API error response: ${errorText}`);
+          throw new Error(`GitLab API error: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+        
+        note = await response.json() as GitLabNote;
       } else {
         throw new Error(
           "Cannot create comment without merge request or issue context",

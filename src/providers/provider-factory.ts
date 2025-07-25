@@ -119,10 +119,24 @@ export function getToken(): string {
     // Check for GitLab access token first (highest priority)
     const glAccessToken = process.env.CLAUDE_CODE_GL_ACCESS_TOKEN;
     if (glAccessToken) {
-      console.log(
-        `Using CLAUDE_CODE_GL_ACCESS_TOKEN for GitLab authentication (length: ${glAccessToken.length})`,
-      );
-      return glAccessToken;
+      // Check if the token is a literal environment variable string (not expanded)
+      if (glAccessToken.startsWith('$')) {
+        console.error(
+          `ERROR: CLAUDE_CODE_GL_ACCESS_TOKEN appears to be unexpanded: "${glAccessToken}"`,
+        );
+        console.error(
+          `This usually means the variable is not defined in GitLab CI/CD settings.`,
+        );
+        console.error(
+          `Please add CLAUDE_CODE_GL_ACCESS_TOKEN to your GitLab project's CI/CD variables.`,
+        );
+        // Don't use this invalid token
+      } else {
+        console.log(
+          `Using CLAUDE_CODE_GL_ACCESS_TOKEN for GitLab authentication (length: ${glAccessToken.length})`,
+        );
+        return glAccessToken;
+      }
     }
 
     // Check for OAuth token (new method)
