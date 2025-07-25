@@ -17,9 +17,11 @@ interface DiscordNotificationOptions {
  * Send a Discord notification when a pipeline is triggered
  * This is fire-and-forget - errors are logged but don't affect the main flow
  */
-export function sendPipelineNotification(options: DiscordNotificationOptions): void {
+export function sendPipelineNotification(
+  options: DiscordNotificationOptions,
+): void {
   const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
-  
+
   if (!discordWebhookUrl) {
     // Discord notifications are optional
     return;
@@ -41,19 +43,20 @@ export function sendPipelineNotification(options: DiscordNotificationOptions): v
 
     // Construct pipeline URL
     const pipelineUrl = `${gitlabUrl}/${projectPath}/-/pipelines/${pipelineId}`;
-    
+
     // Determine resource URL
-    const resourceUrl = resourceType === "merge_request" 
-      ? `${gitlabUrl}/${projectPath}/-/merge_requests/${resourceId}`
-      : resourceType === "issue"
-      ? `${gitlabUrl}/${projectPath}/-/issues/${resourceId}`
-      : null;
+    const resourceUrl =
+      resourceType === "merge_request"
+        ? `${gitlabUrl}/${projectPath}/-/merge_requests/${resourceId}`
+        : resourceType === "issue"
+          ? `${gitlabUrl}/${projectPath}/-/issues/${resourceId}`
+          : null;
 
     // Create Discord embed
     const embed = {
       title: "🤖 Claude Pipeline Triggered",
       url: pipelineUrl,
-      color: 0xFC6D26, // GitLab orange
+      color: 0xfc6d26, // GitLab orange
       fields: [
         {
           name: "Project",
@@ -67,11 +70,12 @@ export function sendPipelineNotification(options: DiscordNotificationOptions): v
         },
         {
           name: "Resource",
-          value: resourceType === "merge_request" 
-            ? `Merge Request !${resourceId}`
-            : resourceType === "issue"
-            ? `Issue #${resourceId}${issueTitle ? ` - ${issueTitle}` : ""}`
-            : "Unknown",
+          value:
+            resourceType === "merge_request"
+              ? `Merge Request !${resourceId}`
+              : resourceType === "issue"
+                ? `Issue #${resourceId}${issueTitle ? ` - ${issueTitle}` : ""}`
+                : "Unknown",
           inline: true,
         },
         {
@@ -92,7 +96,8 @@ export function sendPipelineNotification(options: DiscordNotificationOptions): v
       ],
       footer: {
         text: "GitLab Claude Webhook",
-        icon_url: "https://about.gitlab.com/images/press/logo/png/gitlab-icon-rgb.png",
+        icon_url:
+          "https://about.gitlab.com/images/press/logo/png/gitlab-icon-rgb.png",
       },
       timestamp: new Date().toISOString(),
     };
@@ -101,9 +106,10 @@ export function sendPipelineNotification(options: DiscordNotificationOptions): v
     if (directPrompt) {
       embed.fields.push({
         name: "Prompt",
-        value: directPrompt.length > 100 
-          ? directPrompt.substring(0, 100) + "..." 
-          : directPrompt,
+        value:
+          directPrompt.length > 100
+            ? directPrompt.substring(0, 100) + "..."
+            : directPrompt,
         inline: false,
       });
     }
@@ -159,7 +165,7 @@ export function sendRateLimitNotification(
   resourceId: string,
 ): void {
   const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
-  
+
   if (!discordWebhookUrl) {
     return;
   }
@@ -167,7 +173,7 @@ export function sendRateLimitNotification(
   try {
     const embed = {
       title: "⚠️ Rate Limit Exceeded",
-      color: 0xFF0000, // Red
+      color: 0xff0000, // Red
       description: `Claude requests have been rate-limited for @${authorUsername}`,
       fields: [
         {
@@ -188,7 +194,8 @@ export function sendRateLimitNotification(
       ],
       footer: {
         text: "GitLab Claude Webhook - Rate Limited",
-        icon_url: "https://about.gitlab.com/images/press/logo/png/gitlab-icon-rgb.png",
+        icon_url:
+          "https://about.gitlab.com/images/press/logo/png/gitlab-icon-rgb.png",
       },
       timestamp: new Date().toISOString(),
     };

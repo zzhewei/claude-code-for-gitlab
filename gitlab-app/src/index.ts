@@ -123,7 +123,7 @@ app.post("/webhook", async (c) => {
 
   if (!(await limitByUser(key))) {
     logger.warn("Rate limit exceeded", { key, author: authorUsername });
-    
+
     // Send Discord notification for rate limit
     sendRateLimitNotification(
       projectPath,
@@ -131,7 +131,7 @@ app.post("/webhook", async (c) => {
       mrIid ? "merge_request" : issueIid ? "issue" : "unknown",
       String(mrIid || issueIid || ""),
     );
-    
+
     return c.text("rate-limited", 429);
   }
 
@@ -199,6 +199,33 @@ app.post("/webhook", async (c) => {
   );
   const directPrompt = promptMatch ? promptMatch[1].trim() : "";
 
+  // Create minimal webhook payload for CI/CD variable (10KB limit)
+  const minimalPayload = {
+    object_kind: body.object_kind,
+    project: body.project,
+    user: body.user,
+    object_attributes: body.object_attributes
+      ? {
+          note: body.object_attributes.note,
+          noteable_type: body.object_attributes.noteable_type,
+        }
+      : undefined,
+    merge_request: body.merge_request
+      ? {
+          iid: body.merge_request.iid,
+          title: body.merge_request.title,
+          state: body.merge_request.state,
+        }
+      : undefined,
+    issue: body.issue
+      ? {
+          iid: body.issue.iid,
+          title: body.issue.title,
+          state: body.issue.state,
+        }
+      : undefined,
+  };
+
   // Trigger pipeline with variables
   const variables = {
     CLAUDE_TRIGGER: "true",
@@ -210,7 +237,7 @@ app.post("/webhook", async (c) => {
     CLAUDE_BRANCH: ref,
     TRIGGER_PHRASE: triggerPhrase,
     DIRECT_PROMPT: directPrompt,
-    GITLAB_WEBHOOK_PAYLOAD: JSON.stringify(body),
+    GITLAB_WEBHOOK_PAYLOAD: JSON.stringify(minimalPayload),
   };
 
   logger.info("Triggering pipeline", {

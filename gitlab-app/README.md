@@ -131,6 +131,7 @@ When a pipeline is triggered, these variables are available:
 - `TRIGGER_PHRASE`: The trigger phrase used (e.g., "@claude")
 - `DIRECT_PROMPT`: The text after the trigger phrase
 - `CLAUDE_PROJECT_PATH`: Project path with namespace
+- `GITLAB_WEBHOOK_PAYLOAD`: Full webhook payload as JSON string
 
 ## Admin Endpoints
 
