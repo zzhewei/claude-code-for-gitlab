@@ -227,19 +227,20 @@ See the original ${process.env.CLAUDE_RESOURCE_TYPE} for context.`;
     // Push with GitLab push options to create MR
     const targetBranch = process.env.CI_DEFAULT_BRANCH || "main";
     const mrTitle = `Apply Claude's suggestions for ${process.env.CLAUDE_RESOURCE_TYPE} #${process.env.CLAUDE_RESOURCE_ID}`;
-    const mrDescription = `This merge request was automatically created by Claude AI.
 
-**Original ${process.env.CLAUDE_RESOURCE_TYPE}**: ${process.env.CI_SERVER_URL}/${process.env.CI_PROJECT_PATH}/-/${process.env.CLAUDE_RESOURCE_TYPE === "issue" ? "issues" : "merge_requests"}/${process.env.CLAUDE_RESOURCE_ID}
-
-**Claude's task**: Applied automated fixes and improvements as requested.
-
-/cc @${process.env.GITLAB_USER_LOGIN || "claude"}`;
+    // GitLab push options cannot contain newlines, so we'll use a simpler description
+    // and rely on the commit message for details
+    const resourceUrl = `${process.env.CI_SERVER_URL}/${process.env.CI_PROJECT_PATH}/-/${process.env.CLAUDE_RESOURCE_TYPE === "issue" ? "issues" : "merge_requests"}/${process.env.CLAUDE_RESOURCE_ID}`;
+    const mrDescription = `Automated MR by Claude AI. See ${resourceUrl} for context. /cc @${process.env.GITLAB_USER_LOGIN || "claude"}`;
 
     // Set up git remote with CI_JOB_TOKEN
     const gitRemoteUrl = `https://gitlab-ci-token:${process.env.CI_JOB_TOKEN}@${process.env.CI_SERVER_HOST}/${process.env.CI_PROJECT_PATH}.git`;
     await $`git remote set-url origin ${gitRemoteUrl}`.quiet();
 
     // Push with MR creation options
+    // Note: GitLab push options have limitations:
+    // - No newlines allowed in description
+    // - Limited character length
     const pushResult = await $`git push \
       -o merge_request.create \
       -o merge_request.target=${targetBranch} \
