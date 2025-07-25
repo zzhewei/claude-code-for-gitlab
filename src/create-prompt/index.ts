@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
 import * as core from "@actions/core";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile } from "fs/promises";
 import { getClaudePromptsDirectory } from "../utils/temp-directory";
 import type { FetchDataResult } from "../github/data/fetcher";
 import {

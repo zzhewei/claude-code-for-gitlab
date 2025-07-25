@@ -24,7 +24,6 @@ import {
   detectPlatform,
 } from "../providers/provider-factory";
 import type { SCMProvider } from "../providers/scm-provider";
-import { $ } from "bun";
 import { getClaudePromptsDirectory } from "../utils/temp-directory";
 
 async function run() {

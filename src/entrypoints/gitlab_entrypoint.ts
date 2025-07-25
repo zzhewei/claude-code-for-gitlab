@@ -6,8 +6,8 @@
  */
 
 import { $ } from "bun";
-import * as fs from "fs";
 import * as path from "path";
+import { getClaudePromptsDirectory, getClaudeExecutionOutputPath } from "../utils/temp-directory";
 
 interface PhaseResult {
   success: boolean;
@@ -98,7 +98,7 @@ async function runExecutePhase(prepareResult: PhaseResult): Promise<PhaseResult>
     const env = {
       ...process.env,
       CLAUDE_CODE_ACTION: "1",
-      INPUT_PROMPT_FILE: "/tmp/claude-prompts/claude-prompt.txt",
+      INPUT_PROMPT_FILE: `${getClaudePromptsDirectory()}/claude-prompt.txt`,
       INPUT_TIMEOUT_MINUTES: "30",
       INPUT_MCP_CONFIG: "",
       INPUT_SETTINGS: "",
@@ -164,7 +164,7 @@ async function runUpdatePhase(prepareResult: PhaseResult, executeResult: PhaseRe
 
     // If we're in issue context, ensure CI_ISSUE_IID is set
     if (process.env.CLAUDE_RESOURCE_TYPE === "issue" && process.env.CLAUDE_RESOURCE_ID) {
-      env.CI_ISSUE_IID = process.env.CLAUDE_RESOURCE_ID;
+      (env as any).CI_ISSUE_IID = process.env.CLAUDE_RESOURCE_ID;
     }
 
     // Run update script

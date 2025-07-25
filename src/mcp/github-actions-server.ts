@@ -6,13 +6,12 @@ import { z } from "zod";
 import { GITHUB_API_URL } from "../github/api/config";
 import { mkdir, writeFile } from "fs/promises";
 import { Octokit } from "@octokit/rest";
-import { getTempDirectory, getGitHubCILogsDirectory } from "../utils/temp-directory";
+import { getGitHubCILogsDirectory } from "../utils/temp-directory";
 
 const REPO_OWNER = process.env.REPO_OWNER;
 const REPO_NAME = process.env.REPO_NAME;
 const PR_NUMBER = process.env.PR_NUMBER;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const RUNNER_TEMP = getTempDirectory();
 
 if (!REPO_OWNER || !REPO_NAME || !PR_NUMBER || !GITHUB_TOKEN) {
   console.error(
