@@ -205,6 +205,7 @@ export interface GitHubProviderOptions extends ProviderOptions {
 export interface GitLabProviderOptions extends ProviderOptions {
   projectId: string;
   mrIid?: string;
+  issueIid?: string;
   host: string;
   pipelineUrl?: string;
 }

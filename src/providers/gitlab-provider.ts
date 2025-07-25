@@ -22,7 +22,7 @@ import {
   type ParsedGitLabContext,
 } from "../gitlab/context";
 import { checkGitLabTriggerAction } from "../gitlab/validation/trigger";
-import { fetchGitLabMRData } from "../gitlab/data/fetcher";
+import { fetchGitLabMRData, fetchGitLabIssueData } from "../gitlab/data/fetcher";
 import type {
   GitLabUser,
   GitLabMergeRequest,
@@ -47,6 +47,7 @@ export class GitLabProvider implements SCMProvider {
     this.context = parseGitLabContext({
       projectId: options.projectId,
       mrIid: options.mrIid,
+      issueIid: options.issueIid,
       host: options.host,
       pipelineUrl: options.pipelineUrl,
     });
@@ -78,7 +79,11 @@ export class GitLabProvider implements SCMProvider {
     const webhook = parseGitLabWebhookPayload();
     const isMR =
       !!this.context.mrIid || webhook?.object_kind === "merge_request";
-    const entityNumber = this.context.mrIid ? parseInt(this.context.mrIid) : 0;
+    const entityNumber = this.context.mrIid 
+      ? parseInt(this.context.mrIid) 
+      : this.context.issueIid 
+        ? parseInt(this.context.issueIid)
+        : 0;
 
     return {
       platform: "gitlab",
@@ -198,14 +203,23 @@ export class GitLabProvider implements SCMProvider {
   }
 
   async getComments(): Promise<CommentInfo[]> {
-    if (!this.context.mrIid) {
+    let discussions: GitLabDiscussion[];
+
+    if (this.context.mrIid) {
+      // Get comments from merge request
+      discussions = (await this.api.MergeRequestDiscussions.all(
+        this.context.projectId,
+        parseInt(this.context.mrIid),
+      )) as unknown as GitLabDiscussion[];
+    } else if (this.context.issueIid) {
+      // Get comments from issue
+      discussions = (await this.api.IssueDiscussions.all(
+        this.context.projectId,
+        parseInt(this.context.issueIid),
+      )) as unknown as GitLabDiscussion[];
+    } else {
       return [];
     }
-
-    const discussions = (await this.api.MergeRequestDiscussions.all(
-      this.context.projectId,
-      parseInt(this.context.mrIid),
-    )) as unknown as GitLabDiscussion[];
 
     const comments: CommentInfo[] = [];
     discussions.forEach((discussion) => {
@@ -226,30 +240,49 @@ export class GitLabProvider implements SCMProvider {
   }
 
   async createComment(body: string): Promise<number> {
-    if (!this.context.mrIid) {
-      throw new Error("Cannot create comment without merge request context");
+    let note: GitLabNote;
+    
+    if (this.context.mrIid) {
+      // Create comment on merge request
+      note = (await this.api.MergeRequestNotes.create(
+        this.context.projectId,
+        parseInt(this.context.mrIid),
+        body,
+      )) as unknown as GitLabNote;
+    } else if (this.context.issueIid) {
+      // Create comment on issue
+      note = (await this.api.IssueNotes.create(
+        this.context.projectId,
+        parseInt(this.context.issueIid),
+        body,
+      )) as unknown as GitLabNote;
+    } else {
+      throw new Error("Cannot create comment without merge request or issue context");
     }
-
-    const note = (await this.api.MergeRequestNotes.create(
-      this.context.projectId,
-      parseInt(this.context.mrIid),
-      body,
-    )) as unknown as GitLabNote;
 
     return note.id;
   }
 
   async updateComment(commentId: number, body: string): Promise<void> {
-    if (!this.context.mrIid) {
-      throw new Error("Cannot update comment without merge request context");
+    if (this.context.mrIid) {
+      // Update comment on merge request
+      await this.api.MergeRequestNotes.edit(
+        this.context.projectId,
+        parseInt(this.context.mrIid),
+        commentId,
+        { body },
+      );
+    } else if (this.context.issueIid) {
+      // Update comment on issue
+      await this.api.IssueNotes.edit(
+        this.context.projectId,
+        parseInt(this.context.issueIid),
+        commentId,
+        { body },
+      );
+    } else {
+      throw new Error("Cannot update comment without merge request or issue context");
     }
-
-    await this.api.MergeRequestNotes.edit(
-      this.context.projectId,
-      parseInt(this.context.mrIid),
-      commentId,
-      { body },
-    );
   }
 
   async getDiff(): Promise<string> {
@@ -475,7 +508,11 @@ ${s.suggestion}
       return fetchGitLabMRData(this.options.token, this.context);
     }
 
-    // Return basic context if not in MR
+    if (this.context.issueIid) {
+      return fetchGitLabIssueData(this.options.token, this.context, this.context.issueIid);
+    }
+
+    // Return basic context if not in MR or Issue
     return {
       projectId: this.context.projectId,
       host: this.context.host,

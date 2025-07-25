@@ -7,6 +7,7 @@
 export interface ParsedGitLabContext {
   projectId: string;
   mrIid?: string;
+  issueIid?: string;
   host: string;
   pipelineUrl?: string;
   commitSha: string;
@@ -20,6 +21,7 @@ export function parseGitLabContext(
   opts: {
     projectId?: string;
     mrIid?: string;
+    issueIid?: string;
     host?: string;
     pipelineUrl?: string;
   } = {},
@@ -27,6 +29,7 @@ export function parseGitLabContext(
   // Use provided options or fall back to environment variables
   const projectId = opts.projectId ?? process.env.CI_PROJECT_ID;
   const mrIid = opts.mrIid ?? process.env.CI_MERGE_REQUEST_IID;
+  const issueIid = opts.issueIid ?? process.env.CLAUDE_RESOURCE_ID;
   const host = opts.host ?? process.env.CI_SERVER_URL ?? "https://gitlab.com";
   const pipelineUrl = opts.pipelineUrl ?? process.env.CI_PIPELINE_URL;
 
@@ -45,6 +48,7 @@ export function parseGitLabContext(
   return {
     projectId,
     mrIid,
+    issueIid,
     host,
     pipelineUrl,
     commitSha,
