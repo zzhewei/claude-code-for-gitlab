@@ -114,9 +114,11 @@ export class GitLabProvider implements SCMProvider {
     }
     try {
       // 1. Find the user by username to get their ID
+      console.log(`Looking up user by username: ${username}`);
       const users = (await this.api.Users.all({
         username,
       })) as unknown as GitLabUser[];
+      
       if (users.length === 0) {
         console.log(`User '${username}' not found on GitLab instance.`);
         return false;
@@ -126,18 +128,22 @@ export class GitLabProvider implements SCMProvider {
         return false;
       }
       const userId = user.id;
+      console.log(`Found user ID: ${userId} for username: ${username}`);
 
       // 2. Use direct API call to check member including inherited permissions
       try {
+        console.log(`Checking membership for project ${this.context.projectId} and user ${userId}`);
         // GitLab API endpoint: /projects/:id/members/all/:user_id
         const member = (await (this.api as any).requester.get(
           `/projects/${this.context.projectId}/members/all/${userId}`,
         )) as GitLabMember;
+        console.log(`Member access level: ${member.access_level}`);
         // Developer (30), Maintainer (40), Owner (50) have write access
         return member.access_level >= 30;
       } catch (error: any) {
+        console.error(`Error checking project membership:`, error);
         if ((error as any).response?.status === 404) {
-          // User is not a member (direct or inherited)
+          console.log("User is not a member (direct or inherited) - 404 response");
           return false;
         }
         throw error;
@@ -150,17 +156,24 @@ export class GitLabProvider implements SCMProvider {
 
   async isHumanActor(username: string): Promise<boolean> {
     try {
+      console.log(`Checking if user is human: ${username}`);
       const users = (await this.api.Users.all({
         username,
       })) as unknown as GitLabUser[];
+      
       if (users.length === 0) {
+        console.log(`User '${username}' not found for human check`);
         return false; // User not found
       }
       const user = users[0];
+      console.log(`User type: ${user?.user_type}, state: ${user?.state}`);
       // In GitLab, bot users have user_type 'project_bot' or similar
       // The `bot` property is a GitLab v16.0+ feature
-      return user?.user_type !== "project_bot" && user?.state === "active";
-    } catch {
+      const isHuman = user?.user_type !== "project_bot" && user?.state === "active";
+      console.log(`Human check result: ${isHuman}`);
+      return isHuman;
+    } catch (error) {
+      console.error(`Error checking if user is human:`, error);
       return false;
     }
   }

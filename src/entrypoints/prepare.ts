@@ -166,10 +166,18 @@ async function runGitLab() {
     });
 
     // Step 4: Check write permissions
+    console.log("Step 4: Checking write permissions...");
     const context = provider.getContext();
-    const hasWritePermissions = await provider.hasWritePermission(
-      context.actor,
-    );
+    console.log(`Checking permissions for actor: ${context.actor}`);
+    
+    let hasWritePermissions: boolean;
+    try {
+      hasWritePermissions = await provider.hasWritePermission(context.actor);
+      console.log(`Write permissions check result: ${hasWritePermissions}`);
+    } catch (error) {
+      console.error("Error checking write permissions:", error);
+      throw new Error(`Failed to check write permissions: ${error instanceof Error ? error.message : error}`);
+    }
 
     if (!hasWritePermissions) {
       throw new Error(
@@ -178,10 +186,15 @@ async function runGitLab() {
     }
 
     // Step 5: Check trigger conditions
-    const containsTrigger = await provider.checkTrigger(
-      triggerPhrase,
-      directPrompt,
-    );
+    console.log("Step 5: Checking trigger conditions...");
+    let containsTrigger: boolean;
+    try {
+      containsTrigger = await provider.checkTrigger(triggerPhrase, directPrompt);
+      console.log(`Trigger check result: ${containsTrigger}`);
+    } catch (error) {
+      console.error("Error checking trigger:", error);
+      throw new Error(`Failed to check trigger: ${error instanceof Error ? error.message : error}`);
+    }
 
     if (!containsTrigger) {
       console.log("No trigger found, skipping remaining steps");
@@ -190,13 +203,24 @@ async function runGitLab() {
 
     // Step 6: Check if actor is human (skip for direct prompts)
     if (!directPrompt) {
-      const isHuman = await provider.isHumanActor(context.actor);
+      console.log("Step 6: Checking if actor is human...");
+      let isHuman: boolean;
+      try {
+        isHuman = await provider.isHumanActor(context.actor);
+        console.log(`Human actor check result: ${isHuman}`);
+      } catch (error) {
+        console.error("Error checking human actor:", error);
+        throw new Error(`Failed to check human actor: ${error instanceof Error ? error.message : error}`);
+      }
       if (!isHuman) {
         throw new Error("Actor is not a human user");
       }
+    } else {
+      console.log("Step 6: Skipping human actor check (direct prompt provided)");
     }
 
     // Step 7: Create initial tracking comment
+    console.log("Step 7: Creating initial tracking comment...");
     const jobUrl = provider.getJobUrl();
     const commentBody = `🤖 Claude is working on this...
 
@@ -208,8 +232,14 @@ async function runGitLab() {
 - [ ] Implementing changes
 - [ ] Running tests`;
 
-    const commentId = await provider.createComment(commentBody);
-    console.log(`Created comment with ID: ${commentId}`);
+    let commentId: number;
+    try {
+      commentId = await provider.createComment(commentBody);
+      console.log(`Created comment with ID: ${commentId}`);
+    } catch (error) {
+      console.error("Error creating comment:", error);
+      throw new Error(`Failed to create comment: ${error instanceof Error ? error.message : error}`);
+    }
 
     // Output comment ID for later use
     if (process.env.GITHUB_OUTPUT) {
@@ -224,13 +254,28 @@ async function runGitLab() {
     process.env.CLAUDE_COMMENT_ID = commentId.toString();
 
     // Step 8: GitLab-specific setup
-    console.log("GitLab mode - creating prompt for Claude");
+    console.log("Step 8: GitLab-specific setup - creating prompt for Claude");
 
     // Configure git for GitLab
-    await provider.setupGitAuth(token);
+    console.log("Step 8a: Configuring git authentication...");
+    try {
+      await provider.setupGitAuth(token);
+      console.log("Git authentication configured successfully");
+    } catch (error) {
+      console.error("Error configuring git auth:", error);
+      throw new Error(`Failed to configure git auth: ${error instanceof Error ? error.message : error}`);
+    }
 
     // Fetch context data
-    const contextData = await provider.fetchContextData();
+    console.log("Step 8b: Fetching context data...");
+    let contextData: any;
+    try {
+      contextData = await provider.fetchContextData();
+      console.log("Context data fetched successfully");
+    } catch (error) {
+      console.error("Error fetching context data:", error);
+      throw new Error(`Failed to fetch context data: ${error instanceof Error ? error.message : error}`);
+    }
 
     // Create prompt directory
     const promptDir = "/tmp/claude-prompts";

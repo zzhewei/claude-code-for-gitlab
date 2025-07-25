@@ -120,7 +120,7 @@ export function getToken(): string {
     const glAccessToken = process.env.CLAUDE_CODE_GL_ACCESS_TOKEN;
     if (glAccessToken) {
       console.log(
-        "Using CLAUDE_CODE_GL_ACCESS_TOKEN for GitLab authentication",
+        `Using CLAUDE_CODE_GL_ACCESS_TOKEN for GitLab authentication (length: ${glAccessToken.length})`,
       );
       return glAccessToken;
     }
