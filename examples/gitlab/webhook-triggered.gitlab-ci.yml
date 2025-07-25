@@ -9,47 +9,57 @@
 
 # Define the Claude Code job that will be triggered by webhooks
 claude_webhook_handler:
-  image: oven/bun:slim
+  image: node:20-alpine
   stage: build
   before_script:
     # Install git for repository operations
-    - apt-get update && apt-get install -y git openssh-client
+    - apk add --no-cache git openssh-client curl
 
     # Clone Claude Code for GitLab
     - git clone https://github.com/RealMikeChong/claude-code-for-gitlab.git /tmp/claude-code
-    - cd /tmp/claude-code
-    - bun install --frozen-lockfile
 
     # Configure git
     - git config --global user.name "Claude Bot"
-    - git config --global user.email "claude-bot@example.com"
+    - git config --global user.email "claude-bot@${CI_SERVER_HOST}"
 
     # Return to project directory
     - cd $CI_PROJECT_DIR
   script:
-    # Parse webhook payload from environment
-    - echo "Processing GitLab webhook event..."
-    - echo "Event type: ${GITLAB_EVENT_TYPE}"
+    # Debug information
+    - echo "Processing Claude webhook trigger..."
+    - echo "Project: ${CLAUDE_PROJECT_PATH}"
+    - echo "Resource Type: ${CLAUDE_RESOURCE_TYPE}"
+    - echo "Resource ID: ${CLAUDE_RESOURCE_ID}"
+    - echo "Branch: ${CLAUDE_BRANCH}"
+    - echo "Author: ${CLAUDE_AUTHOR}"
+    - echo "Note: ${CLAUDE_NOTE}"
 
-    # Run Claude Code action from cloned repository
-    - cd /tmp/claude-code && bun run src/entrypoints/prepare.ts
+    # Checkout the branch where Claude should work
+    - git fetch origin ${CLAUDE_BRANCH}:${CLAUDE_BRANCH} || true
+    - git checkout ${CLAUDE_BRANCH} || git checkout -b ${CLAUDE_BRANCH}
+
+    # Run the Claude runner script
+    - node /tmp/claude-code/gitlab-app/scripts/claude-runner.js
   rules:
     # Only run when triggered by webhook with CLAUDE_TRIGGER variable
     - if: '$CLAUDE_TRIGGER == "true"'
   variables:
-    # Authentication - Claude Code OAuth Token (recommended)
-    CLAUDE_CODE_OAUTH_TOKEN: $CLAUDE_CODE_OAUTH_TOKEN
+    # GitLab authentication (required for posting comments)
+    GITLAB_TOKEN: $CLAUDE_GITLAB_TOKEN
 
-    # Or use traditional tokens:
-    # GITLAB_TOKEN: $CLAUDE_GITLAB_TOKEN
+    # Claude authentication - Claude Code OAuth Token (recommended)
+    CLAUDE_CODE_OAUTH_TOKEN: $CLAUDE_CODE_OAUTH_TOKEN
+    # Or use Anthropic API key:
     # ANTHROPIC_API_KEY: $CLAUDE_API_KEY
 
     # Claude configuration
-    CLAUDE_TRIGGER_PHRASE: "@claude"
     CLAUDE_MODEL: "sonnet"
 
-    # The webhook payload is passed as GITLAB_WEBHOOK_PAYLOAD
-    # This is automatically set when using GitLab webhooks
+    # Optional: Custom instructions for Claude
+    CLAUDE_INSTRUCTIONS: |
+      You are a helpful assistant that fixes bugs and implements features.
+      Always write tests for your changes.
+      Follow the project's coding standards.
 
 # Webhook configuration for Claude Code GitLab webhook server
 # This configuration works with the webhook server from gitlab-app/
