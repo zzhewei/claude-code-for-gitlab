@@ -348,7 +348,8 @@ async function runGitLab() {
       }
     } else if (webhookPayload?.object_kind === "merge_request") {
       // For MR events, check description
-      const mr = webhookPayload.merge_request || webhookPayload.object_attributes;
+      const mr =
+        webhookPayload.merge_request || webhookPayload.object_attributes;
       if (mr?.description) {
         triggerComment = mr.description;
         console.log("Found trigger in MR description:", triggerComment);
@@ -413,7 +414,7 @@ ${triggerComment ? `The user mentioned you with: "${triggerComment}"` : ""}
 ${directPrompt || "Please analyze this merge request and provide feedback on code quality, potential issues, and suggestions for improvement."}
 
 When providing feedback, be specific and reference exact line numbers and file paths.`;
-    } else if (context.issueIid && contextData.iid) {
+    } else if (contextData.iid && contextData.state) {
       // Issue context
       prompt = `You are Claude, an AI assistant helping with GitLab issues.
 
@@ -458,9 +459,9 @@ When providing assistance, be specific and reference the issue context.`;
 
 ## Project Context
 
-**Project ID:** ${contextData.projectId || context.projectId}
-**Host:** ${contextData.host || context.host}
-**User:** ${contextData.userName || context.userName}
+**Project ID:** ${contextData.projectId || "Unknown"}
+**Host:** ${contextData.host || "Unknown"}
+**User:** ${contextData.userName || "Unknown"}
 
 ## Your Task
 
@@ -477,7 +478,7 @@ ${directPrompt || "Please help with the requested task."}`;
     console.log("Prompt preview (first 500 chars):");
     console.log(prompt.substring(0, 500));
     if (prompt.length > 500) {
-      console.log("... (truncated)")
+      console.log("... (truncated)");
     }
 
     // GitLab doesn't need MCP config for now

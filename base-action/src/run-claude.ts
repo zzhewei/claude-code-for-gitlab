@@ -8,7 +8,7 @@ import { spawn } from "child_process";
 const execAsync = promisify(exec);
 
 // Use platform-agnostic temp directory
-const TEMP_DIR = process.env.RUNNER_TEMP || process.env.CI_BUILDS_DIR || '/tmp';
+const TEMP_DIR = process.env.RUNNER_TEMP || process.env.CI_BUILDS_DIR || "/tmp";
 const PIPE_PATH = `${TEMP_DIR}/claude_prompt_pipe`;
 const EXECUTION_FILE = `${TEMP_DIR}/claude-execution-output.json`;
 const BASE_ARGS = ["-p", "--verbose", "--output-format", "stream-json"];

@@ -1,10 +1,10 @@
 /**
  * Centralized utility for handling temporary directories across GitHub Actions and GitLab CI
- * 
+ *
  * GitHub Actions provides RUNNER_TEMP environment variable
  * GitLab CI provides CI_BUILDS_DIR as the closest equivalent
- * 
- * Reference: 
+ *
+ * Reference:
  * - GitHub: RUNNER_TEMP is a temporary directory on the runner
  * - GitLab: CI_BUILDS_DIR is the main workspace for job execution
  */
@@ -21,7 +21,7 @@ export function getTempDirectory(): string {
   if (process.env.RUNNER_TEMP) {
     return process.env.RUNNER_TEMP;
   }
-  
+
   // GitLab CI - use CI_BUILDS_DIR if available
   if (process.env.CI_BUILDS_DIR) {
     // Create a temp subdirectory within CI_BUILDS_DIR to isolate temporary files
@@ -31,7 +31,7 @@ export function getTempDirectory(): string {
     }
     return gitlabTemp;
   }
-  
+
   // Fallback to system temp directory
   // This works for both local development and CI environments
   return "/tmp";
@@ -46,11 +46,11 @@ export function getTempDirectory(): string {
 export function getTempSubdirectory(subdir: string): string {
   const tempDir = getTempDirectory();
   const fullPath = join(tempDir, subdir);
-  
+
   if (!existsSync(fullPath)) {
     mkdirSync(fullPath, { recursive: true });
   }
-  
+
   return fullPath;
 }
 
@@ -90,36 +90,40 @@ export function getGitHubCILogsDirectory(): string {
  * Detect the current CI platform
  * @returns 'github' | 'gitlab' | 'unknown'
  */
-export function detectCIPlatform(): 'github' | 'gitlab' | 'unknown' {
-  if (process.env.GITHUB_ACTIONS === 'true') {
-    return 'github';
+export function detectCIPlatform(): "github" | "gitlab" | "unknown" {
+  if (process.env.GITHUB_ACTIONS === "true") {
+    return "github";
   }
-  
-  if (process.env.GITLAB_CI === 'true') {
-    return 'gitlab';
+
+  if (process.env.GITLAB_CI === "true") {
+    return "gitlab";
   }
-  
-  return 'unknown';
+
+  return "unknown";
 }
 
 /**
  * Get platform-specific environment info for debugging
  * @returns Object with platform info
  */
-export function getPlatformTempInfo(): { platform: string; tempDir: string; source: string } {
+export function getPlatformTempInfo(): {
+  platform: string;
+  tempDir: string;
+  source: string;
+} {
   const platform = detectCIPlatform();
   const tempDir = getTempDirectory();
-  
-  let source = 'fallback';
+
+  let source = "fallback";
   if (process.env.RUNNER_TEMP) {
-    source = 'RUNNER_TEMP';
+    source = "RUNNER_TEMP";
   } else if (process.env.CI_BUILDS_DIR) {
-    source = 'CI_BUILDS_DIR';
+    source = "CI_BUILDS_DIR";
   }
-  
+
   return {
     platform,
     tempDir,
-    source
+    source,
   };
 }

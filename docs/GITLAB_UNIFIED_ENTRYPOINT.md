@@ -9,12 +9,14 @@ The `gitlab_entrypoint.ts` file provides a unified entrypoint that combines all 
 The entrypoint handles three phases sequentially:
 
 1. **Prepare Phase**
+
    - Checks for Claude triggers (@claude mentions)
    - Verifies permissions
    - Creates initial tracking comment
    - Sets up git authentication
 
 2. **Execute Phase**
+
    - Installs Claude Code globally
    - Installs base-action dependencies
    - Runs Claude Code via base-action
@@ -48,6 +50,7 @@ That's it! The entrypoint handles everything else internally.
 ## Environment Variables
 
 The entrypoint uses the same environment variables as before:
+
 - `CLAUDE_CODE_GL_ACCESS_TOKEN`: GitLab Personal Access Token
 - `CLAUDE_CODE_OAUTH_TOKEN`: Claude OAuth token
 - `CLAUDE_TRIGGER_PHRASE`: Trigger phrase (default: "@claude")

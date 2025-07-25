@@ -7,7 +7,10 @@
 
 import { $ } from "bun";
 import * as path from "path";
-import { getClaudePromptsDirectory, getClaudeExecutionOutputPath } from "../utils/temp-directory";
+import {
+  getClaudePromptsDirectory,
+  getClaudeExecutionOutputPath,
+} from "../utils/temp-directory";
 
 interface PhaseResult {
   success: boolean;
@@ -23,11 +26,12 @@ async function runPreparePhase(): Promise<PhaseResult> {
     console.log("=========================================");
 
     // Run prepare.ts and capture output
-    const prepareResult = await $`bun run ${path.join(__dirname, "prepare.ts")}`.quiet();
-    
+    const prepareResult =
+      await $`bun run ${path.join(__dirname, "prepare.ts")}`.quiet();
+
     // Print the output for debugging
     console.log(prepareResult.stdout.toString());
-    
+
     if (prepareResult.exitCode !== 0) {
       const errorOutput = prepareResult.stderr.toString();
       console.error("Prepare step failed:", errorOutput);
@@ -48,7 +52,9 @@ async function runPreparePhase(): Promise<PhaseResult> {
     }
 
     // Extract comment ID from environment (set by prepare.ts)
-    const commentId = process.env.CLAUDE_COMMENT_ID ? parseInt(process.env.CLAUDE_COMMENT_ID) : undefined;
+    const commentId = process.env.CLAUDE_COMMENT_ID
+      ? parseInt(process.env.CLAUDE_COMMENT_ID)
+      : undefined;
 
     return {
       success: true,
@@ -63,31 +69,42 @@ async function runPreparePhase(): Promise<PhaseResult> {
   }
 }
 
-async function runExecutePhase(prepareResult: PhaseResult): Promise<PhaseResult> {
+async function runExecutePhase(
+  prepareResult: PhaseResult,
+): Promise<PhaseResult> {
   try {
     console.log("=========================================");
     console.log("Phase 2: Installing Claude Code...");
     console.log("=========================================");
-    
+
     // Install Claude Code globally
-    const installResult = await $`bun install -g @anthropic-ai/claude-code@1.0.60`;
+    const installResult =
+      await $`bun install -g @anthropic-ai/claude-code@1.0.60`;
     console.log(installResult.stdout.toString());
-    
+
     if (installResult.exitCode !== 0) {
-      throw new Error(`Failed to install Claude Code: ${installResult.stderr.toString()}`);
+      throw new Error(
+        `Failed to install Claude Code: ${installResult.stderr.toString()}`,
+      );
     }
 
     console.log("=========================================");
     console.log("Phase 3: Installing base-action dependencies...");
     console.log("=========================================");
-    
+
     // Install base-action dependencies
-    const baseActionPath = path.join(path.dirname(__dirname), "..", "base-action");
+    const baseActionPath = path.join(
+      path.dirname(__dirname),
+      "..",
+      "base-action",
+    );
     const depsResult = await $`cd ${baseActionPath} && bun install`;
     console.log(depsResult.stdout.toString());
-    
+
     if (depsResult.exitCode !== 0) {
-      throw new Error(`Failed to install base-action dependencies: ${depsResult.stderr.toString()}`);
+      throw new Error(
+        `Failed to install base-action dependencies: ${depsResult.stderr.toString()}`,
+      );
     }
 
     console.log("=========================================");
@@ -100,8 +117,10 @@ async function runExecutePhase(prepareResult: PhaseResult): Promise<PhaseResult>
     try {
       const fs = await import("fs");
       promptContent = await fs.promises.readFile(promptPath, "utf-8");
-      console.log(`Prompt file loaded, size: ${promptContent.length} characters`);
-      
+      console.log(
+        `Prompt file loaded, size: ${promptContent.length} characters`,
+      );
+
       // Debug: Show first 500 chars of prompt
       if (promptContent.length > 0) {
         console.log("Prompt preview (first 500 chars):");
@@ -134,7 +153,7 @@ async function runExecutePhase(prepareResult: PhaseResult): Promise<PhaseResult>
     // Run the base-action
     const baseActionScript = path.join(baseActionPath, "src", "index.ts");
     const executeResult = await $`bun run ${baseActionScript}`.env(env).quiet();
-    
+
     // Print output regardless of exit code
     console.log(executeResult.stdout.toString());
     if (executeResult.stderr.toString()) {
@@ -142,10 +161,11 @@ async function runExecutePhase(prepareResult: PhaseResult): Promise<PhaseResult>
     }
 
     const outputFile = "/tmp/claude-output.json";
-    
+
     return {
       success: executeResult.exitCode === 0,
-      error: executeResult.exitCode !== 0 ? "Claude execution failed" : undefined,
+      error:
+        executeResult.exitCode !== 0 ? "Claude execution failed" : undefined,
       commentId: prepareResult.commentId,
       outputFile,
     };
@@ -159,7 +179,10 @@ async function runExecutePhase(prepareResult: PhaseResult): Promise<PhaseResult>
   }
 }
 
-async function runUpdatePhase(prepareResult: PhaseResult, executeResult: PhaseResult): Promise<PhaseResult> {
+async function runUpdatePhase(
+  prepareResult: PhaseResult,
+  executeResult: PhaseResult,
+): Promise<PhaseResult> {
   try {
     // Only update if we have a comment ID
     if (!prepareResult.commentId) {
@@ -181,18 +204,24 @@ async function runUpdatePhase(prepareResult: PhaseResult, executeResult: PhaseRe
     };
 
     // If we're in issue context, ensure CI_ISSUE_IID is set
-    if (process.env.CLAUDE_RESOURCE_TYPE === "issue" && process.env.CLAUDE_RESOURCE_ID) {
+    if (
+      process.env.CLAUDE_RESOURCE_TYPE === "issue" &&
+      process.env.CLAUDE_RESOURCE_ID
+    ) {
       (env as any).CI_ISSUE_IID = process.env.CLAUDE_RESOURCE_ID;
     }
 
     // Run update script
     const updateScript = path.join(__dirname, "update-comment-gitlab.ts");
     const updateResult = await $`bun run ${updateScript}`.env(env).quiet();
-    
+
     console.log(updateResult.stdout.toString());
-    
+
     if (updateResult.exitCode !== 0) {
-      console.error("Failed to update comment:", updateResult.stderr.toString());
+      console.error(
+        "Failed to update comment:",
+        updateResult.stderr.toString(),
+      );
       return {
         success: false,
         error: "Failed to update comment",
@@ -217,7 +246,7 @@ async function main() {
   try {
     // Phase 1: Prepare
     prepareResult = await runPreparePhase();
-    
+
     if (!prepareResult.success) {
       // Exit early if prepare failed (no trigger found is not an error)
       if (prepareResult.error === "No trigger found") {
@@ -229,12 +258,11 @@ async function main() {
 
     // Phase 2: Execute
     executeResult = await runExecutePhase(prepareResult);
-    
+
     if (!executeResult.success) {
       exitCode = 1;
       console.error(`Execute phase failed: ${executeResult.error}`);
     }
-
   } catch (error) {
     exitCode = 1;
     console.error("Fatal error:", error);

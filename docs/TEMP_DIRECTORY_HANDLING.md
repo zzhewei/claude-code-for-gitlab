@@ -7,11 +7,13 @@ This project uses a centralized approach for handling temporary directories acro
 ## Platform Differences
 
 ### GitHub Actions
+
 - Provides `RUNNER_TEMP` environment variable
 - Points to a temporary directory on the runner
 - Automatically cleaned up after job completion
 
 ### GitLab CI
+
 - No direct equivalent to `RUNNER_TEMP`
 - `CI_BUILDS_DIR` is the main workspace directory
 - We create `.claude-temp` subdirectory within `CI_BUILDS_DIR`
@@ -92,6 +94,7 @@ The following directories are created under the temp directory:
 The following files have been updated to use the centralized temp directory:
 
 ### TypeScript:
+
 - `src/utils/temp-directory.ts` - Main utility (new)
 - `base-action/src/run-claude.ts` - Uses inline fallback
 - `src/mcp/install-mcp-server.ts` - Uses utility
@@ -101,6 +104,7 @@ The following files have been updated to use the centralized temp directory:
 - `src/entrypoints/gitlab_entrypoint.ts` - Uses utility
 
 ### Shell Scripts:
+
 - `scripts/get-temp-directory.sh` - Shell utility (new)
 - `scripts/setup-network-restrictions-unified.sh` - Updated version (new)
 - `scripts/setup-network-restrictions.sh` - Original (still uses RUNNER_TEMP)

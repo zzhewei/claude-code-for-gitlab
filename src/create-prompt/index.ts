@@ -830,10 +830,7 @@ export async function createPrompt(
     console.log("=======================");
 
     // Write the prompt file
-    await writeFile(
-      `${promptsDir}/claude-prompt.txt`,
-      promptContent,
-    );
+    await writeFile(`${promptsDir}/claude-prompt.txt`, promptContent);
 
     // Set allowed tools
     const hasActionsReadPermission =
