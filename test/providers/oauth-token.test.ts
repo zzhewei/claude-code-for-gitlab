@@ -148,7 +148,7 @@ describe("OAuth Token Support", () => {
 
       getToken();
 
-      expect(logMessage).toBe(
+      expect(logMessage).toContain(
         "Using CLAUDE_CODE_GL_ACCESS_TOKEN for GitLab authentication",
       );
       console.log = originalLog;

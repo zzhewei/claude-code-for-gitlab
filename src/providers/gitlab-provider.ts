@@ -55,10 +55,60 @@ export class GitLabProvider implements SCMProvider {
       pipelineUrl: options.pipelineUrl,
     });
 
+    console.log(`GitLab Provider initialized:`);
+    console.log(`  Host: ${this.context.host}`);
+    console.log(`  Project ID: ${this.context.projectId}`);
+    console.log(`  Token length: ${options.token.length}`);
+    console.log(`  Token prefix: ${options.token.substring(0, 8)}...`);
+
     this.api = new Gitlab({
       host: this.context.host,
       token: options.token,
     });
+
+    // Test token validity on initialization (skip in test environments)
+    if (process.env.NODE_ENV !== "test" && !process.env.BUN_TEST) {
+      this.validateToken().catch((error) => {
+        console.error(
+          `Token validation failed during initialization:`,
+          error.message,
+        );
+      });
+    }
+  }
+
+  private async validateToken(): Promise<void> {
+    try {
+      console.log("Testing token validity...");
+      const user = await this.api.Users.current();
+      console.log(
+        `Token is valid. Authenticated as: ${user.username} (${user.name})`,
+      );
+
+      // Test project access
+      try {
+        const project = await this.api.Projects.show(this.context.projectId);
+        console.log(`Project access confirmed: ${project.path_with_namespace}`);
+      } catch (projectError: any) {
+        console.error(
+          `Cannot access project ${this.context.projectId}:`,
+          projectError.message,
+        );
+        if (projectError.response?.status) {
+          console.error(
+            `Project access error status: ${projectError.response.status}`,
+          );
+        }
+      }
+    } catch (error: any) {
+      console.error(`Token validation failed:`, error.message);
+      if (error.response?.status) {
+        console.error(
+          `Token validation error status: ${error.response.status}`,
+        );
+      }
+      throw new Error(`Invalid GitLab token: ${error.message}`);
+    }
   }
 
   getPlatform(): "gitlab" {
@@ -261,29 +311,78 @@ export class GitLabProvider implements SCMProvider {
   }
 
   async createComment(body: string): Promise<number> {
+    console.log(`Creating comment for project ${this.context.projectId}`);
+    console.log(
+      `Context: MR IID=${this.context.mrIid}, Issue IID=${this.context.issueIid}`,
+    );
+
     let note: GitLabNote;
 
-    if (this.context.mrIid) {
-      // Create comment on merge request
-      note = (await this.api.MergeRequestNotes.create(
-        this.context.projectId,
-        parseInt(this.context.mrIid),
-        body,
-      )) as unknown as GitLabNote;
-    } else if (this.context.issueIid) {
-      // Create comment on issue
-      note = (await this.api.IssueNotes.create(
-        this.context.projectId,
-        parseInt(this.context.issueIid),
-        body,
-      )) as unknown as GitLabNote;
-    } else {
-      throw new Error(
-        "Cannot create comment without merge request or issue context",
-      );
-    }
+    try {
+      if (this.context.mrIid) {
+        // Create comment on merge request
+        console.log(
+          `Creating MR comment for project ${this.context.projectId}, MR ${this.context.mrIid}`,
+        );
+        note = (await this.api.MergeRequestNotes.create(
+          this.context.projectId,
+          parseInt(this.context.mrIid),
+          body,
+        )) as unknown as GitLabNote;
+      } else if (this.context.issueIid) {
+        // Create comment on issue
+        console.log(
+          `Creating issue comment for project ${this.context.projectId}, issue ${this.context.issueIid}`,
+        );
 
-    return note.id;
+        // First check if we can access the issue
+        try {
+          const issue = await this.api.Issues.show(
+            this.context.projectId,
+            parseInt(this.context.issueIid),
+          );
+          console.log(
+            `Issue ${this.context.issueIid} exists and is accessible`,
+          );
+        } catch (issueError: any) {
+          console.error(
+            `Cannot access issue ${this.context.issueIid}:`,
+            issueError.message,
+          );
+          if (issueError.response?.status) {
+            console.error(
+              `Issue access error status: ${issueError.response.status}`,
+            );
+          }
+        }
+
+        note = (await this.api.IssueNotes.create(
+          this.context.projectId,
+          parseInt(this.context.issueIid),
+          body,
+        )) as unknown as GitLabNote;
+      } else {
+        throw new Error(
+          "Cannot create comment without merge request or issue context",
+        );
+      }
+
+      console.log(`Comment created successfully with ID: ${note.id}`);
+      return note.id;
+    } catch (error: any) {
+      console.error(`Failed to create comment:`, error.message);
+      if (error.response?.status) {
+        console.error(`API response status: ${error.response.status}`);
+        console.error(`API response URL: ${error.response.url}`);
+      }
+      if (error.cause?.response?.headers) {
+        console.error(
+          `Response headers:`,
+          Object.fromEntries(error.cause.response.headers.entries()),
+        );
+      }
+      throw error;
+    }
   }
 
   async updateComment(commentId: number, body: string): Promise<void> {

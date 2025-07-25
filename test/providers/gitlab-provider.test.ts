@@ -98,7 +98,7 @@ describe("GitLabProvider", () => {
       });
 
       await expect(providerNoMR.createComment("test")).rejects.toThrow(
-        "Cannot create comment without merge request context",
+        "Cannot create comment without merge request or issue context",
       );
     });
 
@@ -109,7 +109,7 @@ describe("GitLabProvider", () => {
       });
 
       await expect(providerNoMR.updateComment(1, "test")).rejects.toThrow(
-        "Cannot update comment without merge request context",
+        "Cannot update comment without merge request or issue context",
       );
     });
 
