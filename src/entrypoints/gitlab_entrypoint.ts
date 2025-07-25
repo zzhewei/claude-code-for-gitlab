@@ -291,22 +291,45 @@ async function postClaudeResponse(
 
     try {
       const outputContent = await fs.promises.readFile(outputPath, "utf-8");
-      const output = JSON.parse(outputContent);
 
-      // Extract Claude's response
+      // Parse the JSONL output (multiple JSON objects separated by newlines)
+      const lines = outputContent.trim().split("\n");
       let claudeMessage = "";
-      if (output.type === "assistant" && output.message?.content) {
-        for (const content of output.message.content) {
-          if (content.type === "text") {
-            claudeMessage += content.text + "\n";
+
+      // Process each line as a separate JSON object
+      for (const line of lines) {
+        if (!line.trim()) continue;
+
+        try {
+          const output = JSON.parse(line);
+
+          // Look for the result in the final result object
+          if (output.type === "result" && output.result) {
+            claudeMessage = output.result;
+            break;
           }
+
+          // Also check assistant messages
+          if (output.type === "assistant" && output.message?.content) {
+            let tempMessage = "";
+            for (const content of output.message.content) {
+              if (content.type === "text") {
+                tempMessage += content.text + "\n";
+              }
+            }
+            if (tempMessage) {
+              claudeMessage = tempMessage.trim();
+            }
+          }
+        } catch (parseError) {
+          console.error("Error parsing line:", parseError);
+          continue;
         }
-      } else if (output.result) {
-        claudeMessage = output.result;
       }
 
       if (!claudeMessage) {
         console.log("No message found in Claude's output");
+        console.log("Output content:", outputContent.substring(0, 500));
         return;
       }
 
@@ -328,6 +351,7 @@ ${claudeMessage}
       console.log("✅ Posted Claude's response to GitLab");
     } catch (fileError) {
       console.error("Error reading output file:", fileError);
+      console.error("Output path:", outputPath);
       return;
     }
   } catch (error) {
@@ -430,15 +454,27 @@ async function main() {
       exitCode = 1;
       console.error(`Execute phase failed: ${executeResult.error}`);
     }
+
+    // Phase 3: Update (always run after execution completes)
+    // This should run whether execute succeeded or failed
+    const updateResult = await runUpdatePhase(prepareResult, executeResult);
+    if (!updateResult.success) {
+      console.error("Warning: Failed to update comment");
+      // Don't fail the entire job just because update failed
+    }
   } catch (error) {
     exitCode = 1;
     console.error("Fatal error:", error);
-  } finally {
-    // Phase 3: Update (always run if we have a comment)
+
+    // Even on fatal error, try to update if we have a comment
     if (prepareResult.commentId) {
-      const updateResult = await runUpdatePhase(prepareResult, executeResult);
-      if (!updateResult.success) {
-        console.error("Warning: Failed to update comment");
+      try {
+        const updateResult = await runUpdatePhase(prepareResult, executeResult);
+        if (!updateResult.success) {
+          console.error("Warning: Failed to update comment after fatal error");
+        }
+      } catch (updateError) {
+        console.error("Error during emergency update:", updateError);
       }
     }
   }
