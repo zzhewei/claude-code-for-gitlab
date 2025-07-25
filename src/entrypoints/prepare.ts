@@ -28,7 +28,7 @@ import { $ } from "bun";
 
 async function run() {
   const platform = detectPlatform();
-  
+
   // Use platform-specific logic
   if (platform === "gitlab") {
     // GitLab mode - output platform using echo
@@ -317,7 +317,7 @@ ${directPrompt || "Please help with the requested task."}`;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(`Prepare step failed with error: ${errorMessage}`);
-    
+
     // Output error for GitLab CI
     console.log(`prepare_error=${errorMessage}`);
 

@@ -6,6 +6,10 @@
 #
 # IMPORTANT: This requires deploying the webhook server first.
 # See gitlab-app/README.md for deployment instructions.
+#
+# Two main jobs are provided:
+# 1. claude_webhook_handler - Simple job using claude-runner.js
+# 2. claude_advanced_handler - Advanced job using prepare.ts for full integration
 
 # Define the Claude Code job that will be triggered by webhooks
 claude_webhook_handler:
@@ -78,6 +82,76 @@ claude_webhook_handler:
 # 2. Configure GitLab webhook to point to your webhook server URL
 # 3. The webhook server will trigger this pipeline with proper variables
 
+# Alternative job using prepare.ts for more advanced integration
+claude_advanced_handler:
+  image: node:20-alpine
+  stage: build
+  before_script:
+    # Install dependencies
+    - apk add --no-cache git openssh-client curl
+
+    # Clone Claude Code for GitLab
+    - git clone https://github.com/RealMikeChong/claude-code-for-gitlab.git /tmp/claude-code
+    - cd /tmp/claude-code
+
+    # Install dependencies
+    - npm install -g bun
+    - bun install
+
+    # Configure git
+    - git config --global user.name "Claude Bot"
+    - git config --global user.email "claude-bot@${CI_SERVER_HOST}"
+
+    # Return to project directory
+    - cd $CI_PROJECT_DIR
+  script:
+    # Set up environment for prepare.ts
+    - export TRIGGER_PHRASE="${TRIGGER_PHRASE:-@claude}"
+    - export DIRECT_PROMPT="${CLAUDE_NOTE}"
+
+    # Checkout the branch
+    - git fetch origin ${CLAUDE_BRANCH}:${CLAUDE_BRANCH} || true
+    - git checkout ${CLAUDE_BRANCH} || git checkout -b ${CLAUDE_BRANCH}
+
+    # Run prepare.ts to check triggers and set up context
+    - cd /tmp/claude-code
+    - bun run src/entrypoints/prepare.ts
+
+    # Read outputs from prepare.ts
+    - export CONTAINS_TRIGGER=$(grep "contains_trigger=" /tmp/claude-code/output.log | cut -d= -f2 || echo "false")
+
+    # If trigger found, run Claude
+    - |
+      if [ "$CONTAINS_TRIGGER" = "true" ]; then
+        echo "Trigger found, running Claude..."
+        cd $CI_PROJECT_DIR
+        
+        # Run Claude with the prepared prompt
+        if [ -f "/tmp/claude-prompts/claude-prompt.txt" ]; then
+          PROMPT=$(cat /tmp/claude-prompts/claude-prompt.txt)
+          npx @anthropic/claude-code@latest \
+            --model "${CLAUDE_MODEL:-sonnet}" \
+            --prompt "$PROMPT"
+        fi
+      else
+        echo "No trigger found, skipping Claude execution"
+      fi
+  rules:
+    - if: '$CLAUDE_TRIGGER == "true"'
+  variables:
+    # GitLab authentication
+    GITLAB_TOKEN: $CLAUDE_GITLAB_TOKEN
+    CLAUDE_CODE_GL_ACCESS_TOKEN: $CLAUDE_GITLAB_TOKEN
+
+    # Claude authentication
+    CLAUDE_CODE_OAUTH_TOKEN: $CLAUDE_CODE_OAUTH_TOKEN
+
+    # Skip permission checks if needed
+    CC_SKIP_PRE_CHECK: "1"
+
+    # Claude configuration
+    CLAUDE_MODEL: "sonnet"
+
 # Example job for testing webhook integration
 test_webhook:
   image: alpine:latest
@@ -114,3 +188,30 @@ verify_webhook_config:
   rules:
     - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
       when: manual
+
+# Job to demonstrate direct Claude invocation without webhook
+claude_direct:
+  image: node:20-alpine
+  stage: build
+  before_script:
+    - apk add --no-cache git openssh-client
+    - git config --global user.name "Claude Bot"
+    - git config --global user.email "claude-bot@${CI_SERVER_HOST}"
+  script:
+    # Direct Claude invocation for manual triggers
+    - echo "Running Claude directly..."
+    - |
+      npx @anthropic/claude-code@latest \
+        --model "${CLAUDE_MODEL:-sonnet}" \
+        --prompt "${CLAUDE_PROMPT:-Please help with this GitLab project}"
+  rules:
+    # Manual trigger with CLAUDE_PROMPT variable
+    - if: "$CLAUDE_PROMPT"
+      when: manual
+  variables:
+    # Claude authentication
+    CLAUDE_CODE_OAUTH_TOKEN: $CLAUDE_CODE_OAUTH_TOKEN
+    # Or: ANTHROPIC_API_KEY: $CLAUDE_API_KEY
+
+    # Claude configuration
+    CLAUDE_MODEL: "sonnet"

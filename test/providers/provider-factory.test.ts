@@ -94,7 +94,7 @@ describe("getToken", () => {
       delete process.env.INPUT_GITLAB_TOKEN;
 
       expect(() => getToken()).toThrow(
-        "GitLab authentication required (CLAUDE_CODE_OAUTH_TOKEN, GITLAB_TOKEN, or gitlab_token input)",
+        "GitLab authentication required (CLAUDE_CODE_GL_ACCESS_TOKEN, CLAUDE_CODE_OAUTH_TOKEN, GITLAB_TOKEN, or gitlab_token input)",
       );
     });
   });
