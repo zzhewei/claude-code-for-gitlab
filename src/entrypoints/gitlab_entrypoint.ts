@@ -331,16 +331,12 @@ async function postClaudeResponse(
       const outputContent = await fs.promises.readFile(outputPath, "utf-8");
 
       // Parse the JSONL output (multiple JSON objects separated by newlines)
-      const lines = outputContent.trim().split("\n");
+      const outputData = JSON.parse(outputContent);
       let claudeMessage = "";
 
       // Process each line as a separate JSON object
-      for (const line of lines) {
-        if (!line.trim()) continue;
-
+      for (const output of outputData) {
         try {
-          const output = JSON.parse(line);
-
           // Look for the result in the final result object
           if (output.type === "result" && output.result) {
             claudeMessage = output.result;
