@@ -224,7 +224,7 @@ async function createMergeRequest(
     // Get branch name based on context
     const timestamp = Date.now();
     const branchName =
-      process.env.CI_MERGE_REQUEST_SOURCE_BRANCH_NAME ||
+      process.env.CLAUDE_BRANCH ||
       `claude-${process.env.CLAUDE_RESOURCE_TYPE}-${process.env.CLAUDE_RESOURCE_ID}-${timestamp}`;
 
     // Configure git

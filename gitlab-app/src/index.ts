@@ -222,6 +222,7 @@ app.post("/webhook", async (c) => {
     CLAUDE_AUTHOR: authorUsername,
     CLAUDE_RESOURCE_TYPE: mrIid ? "merge_request" : "issue",
     CLAUDE_RESOURCE_ID: String(mrIid || issueIid || ""),
+    CI_MERGE_REQUEST_IID: mrIid,
     CLAUDE_NOTE: note,
     CLAUDE_PROJECT_PATH: projectPath,
     CLAUDE_BRANCH: ref,
