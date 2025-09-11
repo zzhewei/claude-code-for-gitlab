@@ -95,6 +95,7 @@ app.post("/webhook", async (c) => {
   const projectId = body.project?.id;
   const projectPath = body.project?.path_with_namespace;
   const mrIid = body.merge_request?.iid;
+  const mrTitle = body.merge_request?.title;
   const issueIid = body.issue?.iid;
   const issueTitle = body.issue?.title;
   const authorUsername = body.user?.username;
@@ -140,6 +141,7 @@ app.post("/webhook", async (c) => {
     author: authorUsername,
     resourceType: mrIid ? "merge_request" : issueIid ? "issue" : "unknown",
     resourceId: mrIid || issueIid,
+    resourceTitle: mrTitle || issueTitle || "untitled",
   });
 
   // Determine branch ref
@@ -154,10 +156,14 @@ app.post("/webhook", async (c) => {
 
       // Generate branch name with timestamp to ensure uniqueness
       const timestamp = Date.now();
-      const branchName = `claude/issue-${issueIid}-${sanitizeBranchName(issueTitle || "")}-${timestamp}`;
+      const sanitizedTitle = sanitizeBranchName(issueTitle || "");
+      const branchName = sanitizedTitle 
+        ? `claude/issue-${issueIid}/${sanitizedTitle}`
+        : `claude/issue-${issueIid}`;
 
       logger.info("Creating branch for issue", {
         issueIid,
+        issueTitle: issueTitle || "untitled",
         branchName,
         fromBranch: defaultBranch,
       });
