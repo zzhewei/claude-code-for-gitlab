@@ -13,6 +13,37 @@ import { logger } from "./logger";
 import type { WebhookPayload } from "./types";
 import { sendPipelineNotification, sendRateLimitNotification } from "./discord";
 
+// Utility function to parse trigger command and extract base branch
+interface TriggerCommandResult {
+  baseBranch: string | null;
+  cleanedNote: string;
+}
+
+function parseTriggerCommand(note: string, triggerPhrase: string): TriggerCommandResult {
+  // Escape special regex characters in trigger phrase
+  const escapedTrigger = triggerPhrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  // Look for pattern: @claude base:branch-name
+  const baseRegex = new RegExp(`${escapedTrigger}\\s+base:([\\w-/]+)`, 'i');
+  const match = note.match(baseRegex);
+
+  if (match) {
+    const baseBranch = match[1];
+    // Remove the base:branch-name part from the note, keeping just @claude
+    const cleanedNote = note.replace(baseRegex, triggerPhrase).trim();
+    return {
+      baseBranch,
+      cleanedNote
+    };
+  }
+
+  // No base branch specified, return original note
+  return {
+    baseBranch: null,
+    cleanedNote: note
+  };
+}
+
 const app = new Hono();
 
 // Log all requests
@@ -101,13 +132,17 @@ app.post("/webhook", async (c) => {
 
   // Get trigger phrase from environment or use default
   const triggerPhrase = process.env.TRIGGER_PHRASE || "@claude";
+
+  // Parse the trigger command to extract base branch if specified
+  const { baseBranch, cleanedNote } = parseTriggerCommand(note, triggerPhrase);
+
   const triggerRegex = new RegExp(
     `${triggerPhrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
     "i",
   );
 
-  // Check for trigger phrase mention
-  if (!triggerRegex.test(note)) {
+  // Check for trigger phrase mention (use cleanedNote for consistent checking)
+  if (!triggerRegex.test(cleanedNote)) {
     logger.debug(`No ${triggerPhrase} mention found in note`);
     return c.text("skipped");
   }
@@ -144,6 +179,7 @@ app.post("/webhook", async (c) => {
 
   // Determine branch ref
   let ref = body.merge_request?.source_branch;
+  let branchValidationMessage = "";
 
   // For issues, create a branch
   if (issueIid && !mrIid) {
@@ -152,18 +188,45 @@ app.post("/webhook", async (c) => {
       const project = await getProject(projectId);
       const defaultBranch = project.default_branch || "main";
 
+      // Determine which branch to use as base
+      let sourceBranch = defaultBranch;
+
+      if (baseBranch) {
+        // Validate the specified base branch exists
+        logger.debug("Validating specified base branch", {
+          baseBranch,
+          projectId
+        });
+
+        const branchValid = await branchExists(projectId, baseBranch);
+        if (branchValid) {
+          sourceBranch = baseBranch;
+          branchValidationMessage = `✅ Using specified base branch: ${baseBranch}`;
+        } else {
+          branchValidationMessage = `⚠️ Specified branch '${baseBranch}' not found, falling back to default branch: ${defaultBranch}`;
+          logger.warn("Specified base branch not found", {
+            baseBranch,
+            defaultBranch,
+            projectId
+          });
+        }
+      }
+
       // Generate branch name with timestamp to ensure uniqueness
       const timestamp = Date.now();
       const branchName = `claude/issue-${issueIid}-${sanitizeBranchName(issueTitle || "")}-${timestamp}`;
 
       logger.info("Creating branch for issue", {
         issueIid,
+        issueTitle: issueTitle || "untitled",
         branchName,
-        fromBranch: defaultBranch,
+        fromBranch: sourceBranch,
+        requestedBaseBranch: baseBranch || "default",
+        baseBranchValid: !baseBranch || sourceBranch === baseBranch,
       });
 
       // Try to create the branch
-      await createBranch(projectId, branchName, defaultBranch);
+      await createBranch(projectId, branchName, sourceBranch);
       ref = branchName;
     } catch (error) {
       logger.error("Failed to create branch for issue", {
@@ -223,7 +286,7 @@ app.post("/webhook", async (c) => {
     CLAUDE_RESOURCE_TYPE: mrIid ? "merge_request" : "issue",
     CLAUDE_RESOURCE_ID: String(mrIid || issueIid || ""),
     CI_MERGE_REQUEST_IID: mrIid,
-    CLAUDE_NOTE: note,
+    CLAUDE_NOTE: cleanedNote, // Use cleaned note without base: syntax
     CLAUDE_PROJECT_PATH: projectPath,
     CLAUDE_BRANCH: ref,
     TRIGGER_PHRASE: triggerPhrase,
@@ -234,6 +297,8 @@ app.post("/webhook", async (c) => {
   logger.info("Triggering pipeline", {
     projectId,
     ref,
+    requestedBaseBranch: baseBranch,
+    branchValidationMessage,
     variables: logger.maskSensitive(variables),
   });
 
